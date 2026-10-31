@@ -117,11 +117,11 @@ export function FallingNotes({ engineRef, popupsRef, rects, width, height, nameS
 
         let fill: string;
         if (s.status === 'hit') fill = COLORS.hit;
-        else if (s.status === 'missed') fill = COLORS.miss;
+        else if (s.status === 'missed' || s.status === 'wrong') fill = COLORS.miss;
         else if (s.status === 'auto') fill = COLORS.auto;
         else fill = s.note.hand === 'R' ? COLORS.right : COLORS.left;
 
-        ctx.globalAlpha = s.status === 'missed' ? 0.55 : 1;
+        ctx.globalAlpha = s.status === 'missed' || s.status === 'wrong' ? 0.55 : 1;
         ctx.fillStyle = fill;
         roundRect(ctx, x, top + 1, w, h, 5);
         ctx.fill();
@@ -132,13 +132,17 @@ export function FallingNotes({ engineRef, popupsRef, rects, width, height, nameS
         }
         ctx.globalAlpha = 1;
 
-        if (h >= 18 && w >= 14 && s.status !== 'auto') {
+        if (h >= 16 && w >= 14 && s.status !== 'auto') {
           ctx.fillStyle = 'rgba(10,12,20,0.85)';
-          ctx.font = `600 ${Math.min(13, w * 0.42)}px system-ui, sans-serif`;
-          ctx.fillText(label(s.note.midi, nameStyle, flats), x + w / 2, top + h - 5);
-          if (s.note.finger && h >= 38) {
-            ctx.font = '600 11px system-ui, sans-serif';
-            ctx.fillText(String(s.note.finger), x + w / 2, top + 15);
+          // Short notes have room for one line only: the finger wins, since the key below shows the name.
+          const fingerOnly = s.note.finger !== undefined && h < 32;
+          if (!fingerOnly) {
+            ctx.font = `600 ${Math.min(13, w * 0.42)}px system-ui, sans-serif`;
+            ctx.fillText(label(s.note.midi, nameStyle, flats), x + w / 2, top + h - 5);
+          }
+          if (s.note.finger) {
+            ctx.font = '700 12px system-ui, sans-serif';
+            ctx.fillText(String(s.note.finger), x + w / 2, fingerOnly ? top + h / 2 + 5 : top + 15);
           }
         }
       }
@@ -149,8 +153,8 @@ export function FallingNotes({ engineRef, popupsRef, rects, width, height, nameS
       ctx.fillRect(0, height - 3, width, 3);
       ctx.globalAlpha = 1;
 
-      // Count-in.
-      if (pos < engine.startBeat) {
+      // Count-in (not when the Roland keeps the beat: then the music waits for the first note).
+      if (pos < engine.startBeat && !engine.startsOnFirstNote) {
         const left = Math.ceil(engine.startBeat - pos - 1e-6);
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.font = '700 64px system-ui, sans-serif';
@@ -166,11 +170,18 @@ export function FallingNotes({ engineRef, popupsRef, rects, width, height, nameS
       const now = performance.now();
       popupsRef.current = popupsRef.current.filter((p) => now - p.at < POPUP_MS);
       ctx.font = '700 15px system-ui, sans-serif';
+      ctx.lineJoin = 'round';
       for (const p of popupsRef.current) {
         const t = (now - p.at) / POPUP_MS;
+        const px = Math.min(width - 70, Math.max(70, p.x));
+        const py = height - 14 - t * 40;
         ctx.globalAlpha = 1 - t;
+        // Dark outline, so the text reads over a note of the same colour.
+        ctx.strokeStyle = 'rgba(10,12,20,0.92)';
+        ctx.lineWidth = 4;
+        ctx.strokeText(p.text, px, py);
         ctx.fillStyle = p.color;
-        ctx.fillText(p.text, Math.min(width - 40, Math.max(40, p.x)), height - 14 - t * 40);
+        ctx.fillText(p.text, px, py);
       }
       ctx.globalAlpha = 1;
     };

@@ -13,8 +13,9 @@ App para aprender teclado com o Roland Fantom 6, tendo o Playground Sessions com
 | Zonas | Uma zona só. Se houver layer ou split, o app junta as notas repetidas de canais diferentes. |
 | Som | Você ouve o próprio Fantom. O acompanhamento (a mão que você não está tocando) é enviado ao Fantom por MIDI no canal 1; sem Fantom, toca no som do computador. |
 | Visual | Notas caindo, partitura ou ambos, escolhido na tela da lição. |
-| Avaliação | Nota certa + tempo certo. Duração e força ficam para depois. |
-| Modos | Espera, Apresentação, mãos separadas, repetir trecho, velocidade + metrônomo. Também há o modo Ouvir. |
+| Avaliação | Nota certa + tempo certo, em milissegundos, medido pelo horário em que a mensagem MIDI chega ao Chrome. Duração e força ficam para depois. |
+| Modos | Apresentação (padrão: a música segue mesmo com erro, que fica marcado), Espera, mãos separadas, repetir trecho, andamento em bpm inteiro. Também há o modo Ouvir. O app lembra o último modo. |
+| Metrônomo | Padrão: o do próprio Fantom, que Ricardo ouve no fone ligado ao teclado. Cada lição mostra o bpm para ajustar no Fantom; a música começa na primeira nota tocada junto com o clique, e as 4 primeiras notas fazem o ajuste fino da batida. Opções: clique do app (som do computador, agendado no tempo exato e descontando o atraso de saída de áudio) ou desligado. |
 | Conteúdo | Trilha estruturada, com todas as lições abertas para você escolher, + músicas pop importadas. |
 | Progresso | Salvo no próprio navegador: melhor nota, estrelas, dias seguidos. |
 | Nomes das notas | Dó · C (os dois), com opção de só um. |
@@ -42,8 +43,9 @@ Teclado do computador / mouse ───────> midi/computerKeyboard.ts �
 ```
 
 - `engine/practice.ts` não depende de tela nem de relógio: recebe o tempo e as teclas e devolve eventos. Por isso pode ser testado a fundo.
-- Janelas de tempo no modo Apresentação: até 80 ms = Perfeito, até 180 ms = Bom (adiantado/atrasado), além disso = nota errada ou perdida.
-- Nota: `(perfeitas + 0,7 × boas) / (total + 0,5 × teclas erradas)`. Estrelas: 60%, 80% e 95%.
+- Janelas de tempo no modo Apresentação: até 60 ms = Perfeito, até 140 ms = um pouco adiantado/atrasado, até meio tempo (entre 200 e 350 ms) = muito adiantado/atrasado; além disso a tecla não conta para a nota.
+- Tecla errada no modo Apresentação: a nota que estava no momento (a mais próxima no tempo, e depois no som) fica marcada como errada e a música segue. Tecla sem nenhuma nota perto = tecla a mais.
+- Nota: `(no tempo + 0,7 × um pouco fora + 0,4 × fora do tempo) / (total + 0,5 × teclas a mais)`. No modo Espera, toda tecla errada é tecla a mais. Estrelas: 60%, 80% e 95%.
 
 ## Marcos
 
@@ -66,11 +68,18 @@ Teclado do computador / mouse ───────> midi/computerKeyboard.ts �
    - Partitura para qualquer música: armadura de clave, acidentes automáticos, nomes com bemol em tons bemóis, ligaduras na barra de compasso, notas sobrepostas na mesma mão, compassos como 3/4 e 6/8.
    - Biblioteca pessoal no Chrome, com estrelas e recorde.
    - Limitações conhecidas: D.S., D.C. e Coda não são seguidos; mudanças de andamento ou de compasso no meio da música são ignoradas (vale o primeiro); quiálteras aparecem arredondadas na partitura (a avaliação usa o tempo exato); nota longa segurada sob outras na mesma mão aparece encurtada na partitura.
-4. **Módulo 3**: mãos independentes.
+4. **Módulo 3, metrônomo do Fantom e avaliação de tempo** *(entregue)*
+   - Módulo 3, *Mãos independentes*: 8 lições com as duas mãos e dedilhado em todas as notas (mãos em paralelo; espelho; Maria tinha um carneirinho com mínimas na esquerda; pulso na mão esquerda; Ponte de Londres; Ao Luar com a melodia passando de mão; Valsa em Dó em 3/4; Minueto em Sol de Petzold, com Fá sustenido).
+   - Dedos da mão esquerda na partitura (em negrito, abaixo da pauta de fá); nas notas caindo, o dedo aparece também em notas curtas.
+   - Andamento em bpm em cada lição (trilha, cartão de abertura, topo), com compasso quando não é 4/4; controle de andamento em bpm inteiro com − e +.
+   - Metrônomo do Fantom: a música começa na primeira nota tocada junto com o clique; pausar ou mudar o andamento faz o app achar a batida de novo.
+   - Modo Apresentação como padrão: tecla errada marca a nota e a música segue; tecla certa logo depois não conta como erro de novo.
+   - Avaliação de tempo mais precisa: horário da mensagem MIDI em vez do quadro da tela; clique do app agendado no tempo exato; janelas 60/140 ms e até meio tempo; resultado em ms em cada tecla, medidor de tempo no topo e tendência média no fim.
 5. **Módulos 4 a 6**: acordes, escalas e intermediário. Avaliação de duração e força; relatório das notas que você mais erra.
+   - Ideia em aberto: o app mandar o clock MIDI para o Fantom (Sync Mode do Fantom em modo escravo pela USB), para o metrônomo do Fantom seguir o app sozinho, sem ajustar o andamento à mão.
 
 ## Testes
 
-- `npm test`: importação (MIDI gerado no teste, MusicXML com ligaduras, acordes, anacruse e repetições, `.mxl` compactado, sugestões de mãos e oitava), motor de prática, leitura de MIDI, notação, montagem da partitura (compassos, pausas, acordes) e conteúdo das lições: tudo cabe nas 61 teclas, nenhuma nota atravessa a barra de compasso e toda duração pode ser escrita na partitura.
+- `npm test`: motor de prática (modo Espera e Apresentação, tecla errada que não para a música, janelas de tempo, metrônomo do Fantom com início na primeira nota, ajuste fino e pausa, clique agendado no tempo exato, repetição de trecho sem perder o tempo), configurações antigas convertidas, horário das mensagens MIDI, importação (MIDI gerado no teste, MusicXML com ligaduras, acordes, anacruse e repetições, `.mxl` compactado, sugestões de mãos e oitava), motor de prática, leitura de MIDI, notação, montagem da partitura (compassos, pausas, acordes) e conteúdo das lições: tudo cabe nas 61 teclas, nenhuma nota atravessa a barra de compasso e toda duração pode ser escrita na partitura.
 - Teste de ponta a ponta no Chrome com um Fantom simulado: conexão, nota reconhecida, lição completa, acompanhamento enviado ao Fantom.
 - Importação testada com arquivos reais de domínio público (Sonatina de Clementi em `.mxl`, Beethoven com voz e 3 bemóis, Bach com notas sobrepostas) e um MIDI no formato do MuseScore.

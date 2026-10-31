@@ -44,7 +44,8 @@ const STAVE_Y: Record<number, number> = { 0: 0, 1: 145 };
 // Stave(y): the top line is 40 below y and the bottom line 80 below.
 const TOP_LINE = 40;
 const BOTTOM_LINE = 80;
-const BOTTOM_ROOM = 70;
+// Below the bass staff: the left hand's fingers, then up to four lines of note names.
+const BOTTOM_ROOM = 86;
 const BEAT_PX = 54;
 const EVENT_PX = 36;
 /** The cursor reaches a bar line this many beats before the bar's first note. */
@@ -81,6 +82,17 @@ function makeNote(ev: SheetEvent, hand: Hand, beatsPerBar: number, opts: Options
   // A held note continued after a tie gets no name or finger again.
   if (ev.continued) return note;
 
+  // Left-hand fingers go right under the bass staff, above the names (added first, so drawn closest).
+  const fingers = fingersTopDown(ev.notes);
+  if (hand === 'L' && fingers.length) {
+    note.addModifier(
+      new Annotation(fingers.join(' '))
+        .setFont('Arial', 13, 'bold')
+        .setVerticalJustification(Annotation.VerticalJustify.BOTTOM),
+      0,
+    );
+  }
+
   if (opts.showNames) {
     let lines: string[];
     if (midis.length === 1) {
@@ -101,12 +113,20 @@ function makeNote(ev: SheetEvent, hand: Hand, beatsPerBar: number, opts: Options
       );
     }
   }
-  // Finger numbers above the right hand only, so they never collide with the names between the staves.
-  const finger = ev.notes[0].finger;
-  if (hand === 'R' && finger) {
-    note.addModifier(new FretHandFinger(String(finger)).setPosition(Modifier.Position.ABOVE), 0);
+  // Right-hand fingers above the treble staff, so they never collide with the names between the staves.
+  if (hand === 'R' && fingers.length) {
+    note.addModifier(new FretHandFinger(fingers.join(' ')).setPosition(Modifier.Position.ABOVE), 0);
   }
   return note;
+}
+
+/** Finger numbers of a note or chord, highest note first (as read on the page, top to bottom). */
+export function fingersTopDown(notes: SongNote[]): number[] {
+  const byKey = new Map<number, number>();
+  for (const n of notes) if (n.finger && !byKey.has(n.midi)) byKey.set(n.midi, n.finger);
+  const fingers = [...byKey.entries()].sort((a, b) => b[0] - a[0]).map(([, f]) => f);
+  // A chord written by hand with one finger for all its notes shows that finger once.
+  return fingers.every((f) => f === fingers[0]) ? fingers.slice(0, 1) : fingers;
 }
 
 interface Options {

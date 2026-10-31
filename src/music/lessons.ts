@@ -1,4 +1,4 @@
-// The learning path. Module 1 uses original exercises and public-domain melodies.
+// The learning path: original exercises and public-domain melodies.
 import { seq } from './notation';
 import type { Module, Song, ViewMode } from './types';
 
@@ -11,6 +11,8 @@ export interface LessonSource {
   right?: string;
   left?: string;
   view?: ViewMode;
+  /** Sharps (+) or flats (-) in the key signature. */
+  keyFifths?: number;
 }
 
 export function buildSong(src: LessonSource): Song {
@@ -22,6 +24,7 @@ export function buildSong(src: LessonSource): Song {
     beatsPerBar: src.beatsPerBar,
     notes: [...(src.right ? seq('R', src.right) : []), ...(src.left ? seq('L', src.left) : [])],
     ...(src.view ? { view: src.view } : {}),
+    ...(src.keyFifths ? { keyFifths: src.keyFifths } : {}),
   };
 }
 
@@ -245,6 +248,131 @@ export const MODULE_2_SOURCES: LessonSource[] = [
   },
 ];
 
+// Module 3: independent hands. Both hands play in every lesson, each with its own fingering.
+export const MODULE_3_SOURCES: LessonSource[] = [
+  {
+    id: 'm3-paralelo',
+    title: 'Mãos em paralelo',
+    goal:
+      'As duas mãos tocam a mesma melodia, a esquerda uma oitava abaixo. As notas são as mesmas, mas os dedos não: na direita o polegar (1) está no Dó, na esquerda é o mindinho (5). Olhe os números.',
+    bpm: 66,
+    beatsPerBar: 4,
+    right:
+      'C4/1@1 D4/1@2 E4/1@3 F4/1@4 | G4/2@5 G4/2@5 | F4/1@4 E4/1@3 D4/1@2 E4/1@3 | C4/4@1 | ' +
+      'E4/1@3 F4/1@4 G4/2@5 | F4/1@4 E4/1@3 D4/2@2 | E4/1@3 D4/1@2 C4/1@1 D4/1@2 | C4/4@1',
+    left:
+      'C3/1@5 D3/1@4 E3/1@3 F3/1@2 | G3/2@1 G3/2@1 | F3/1@2 E3/1@3 D3/1@4 E3/1@3 | C3/4@5 | ' +
+      'E3/1@3 F3/1@2 G3/2@1 | F3/1@2 E3/1@3 D3/2@4 | E3/1@3 D3/1@4 C3/1@5 D3/1@4 | C3/4@5',
+  },
+  {
+    id: 'm3-espelho',
+    title: 'Espelho',
+    goal:
+      'Agora as mãos andam em direções opostas, como num espelho: quando a direita sobe, a esquerda desce. A boa notícia é que os dois lados usam sempre o mesmo número de dedo ao mesmo tempo.',
+    bpm: 66,
+    beatsPerBar: 4,
+    right:
+      'C4/1@1 D4/1@2 E4/1@3 F4/1@4 | G4/4@5 | G4/1@5 F4/1@4 E4/1@3 D4/1@2 | C4/4@1 | ' +
+      'C4/1@1 E4/1@3 G4/2@5 | E4/1@3 D4/1@2 C4/2@1 | D4/1@2 E4/1@3 F4/1@4 D4/1@2 | C4/4@1',
+    left:
+      'G3/1@1 F3/1@2 E3/1@3 D3/1@4 | C3/4@5 | C3/1@5 D3/1@4 E3/1@3 F3/1@2 | G3/4@1 | ' +
+      'G3/1@1 E3/1@3 C3/2@5 | E3/1@3 F3/1@2 G3/2@1 | F3/1@2 E3/1@3 D3/1@4 F3/1@2 | G3/4@1',
+  },
+  {
+    id: 'm3-carneirinho',
+    title: 'Maria tinha um carneirinho',
+    goal:
+      'A direita toca a melodia em semínimas; a esquerda toca uma nota a cada dois tempos (mínimas) e segura. Conte "1, 2, 3, 4": a esquerda entra só no 1 e no 3.',
+    bpm: 80,
+    beatsPerBar: 4,
+    right:
+      'E4/1@3 D4/1@2 C4/1@1 D4/1@2 | E4/1@3 E4/1@3 E4/2@3 | D4/1@2 D4/1@2 D4/2@2 | E4/1@3 G4/1@5 G4/2@5 | ' +
+      'E4/1@3 D4/1@2 C4/1@1 D4/1@2 | E4/1@3 E4/1@3 E4/1@3 E4/1@3 | D4/1@2 D4/1@2 E4/1@3 D4/1@2 | C4/4@1',
+    left:
+      'C3/2@5 E3/2@3 | C3/2@5 E3/2@3 | G3/2@1 F3/2@2 | E3/2@3 C3/2@5 | ' +
+      'C3/2@5 E3/2@3 | C3/2@5 E3/2@3 | G3/2@1 F3/2@2 | C3/4@5',
+  },
+  {
+    id: 'm3-pulso-esquerda',
+    title: 'Pulso na mão esquerda',
+    goal:
+      'Os papéis se invertem: a esquerda toca em todos os tempos (Dó, Sol, Mi, Sol) e a direita segura notas longas. Deixe a esquerda firme como um relógio e encaixe a direita por cima.',
+    bpm: 72,
+    beatsPerBar: 4,
+    right:
+      'E4/2@3 G4/2@5 | F4/2@4 D4/2@2 | E4/2@3 C4/2@1 | D4/4@2 | ' +
+      'E4/2@3 G4/2@5 | F4/2@4 D4/2@2 | D4/1@2 F4/1@4 E4/1@3 D4/1@2 | C4/4@1',
+    left:
+      'C3/1@5 G3/1@1 E3/1@3 G3/1@1 | D3/1@4 G3/1@1 F3/1@2 G3/1@1 | C3/1@5 G3/1@1 E3/1@3 G3/1@1 | D3/1@4 G3/1@1 F3/1@2 G3/1@1 | ' +
+      'C3/1@5 G3/1@1 E3/1@3 G3/1@1 | D3/1@4 G3/1@1 F3/1@2 G3/1@1 | D3/1@4 G3/1@1 F3/1@2 G3/1@1 | C3/4@5',
+  },
+  {
+    id: 'm3-ponte-londres',
+    title: 'Ponte de Londres',
+    goal:
+      'As duas mãos em movimento: a esquerda repete o pulso da lição anterior e a direita toca a melodia, com o ritmo pontuado (longa-curta) no começo das frases. A direita começa com o dedo 4 no Sol.',
+    bpm: 76,
+    beatsPerBar: 4,
+    right:
+      'G4/1.5@4 A4/0.5@5 G4/1@4 F4/1@3 | E4/1@2 F4/1@3 G4/2@4 | D4/1@1 E4/1@2 F4/2@3 | E4/1@2 F4/1@3 G4/2@4 | ' +
+      'G4/1.5@4 A4/0.5@5 G4/1@4 F4/1@3 | E4/1@2 F4/1@3 G4/2@4 | D4/2@1 G4/2@4 | E4/1@2 C4/3@1',
+    left:
+      'C3/1@5 G3/1@1 E3/1@3 G3/1@1 | C3/1@5 G3/1@1 E3/1@3 G3/1@1 | D3/1@4 G3/1@1 F3/1@2 G3/1@1 | C3/1@5 G3/1@1 E3/1@3 G3/1@1 | ' +
+      'C3/1@5 G3/1@1 E3/1@3 G3/1@1 | C3/1@5 G3/1@1 E3/1@3 G3/1@1 | D3/1@4 G3/1@1 F3/1@2 G3/1@1 | C3/4@5',
+  },
+  {
+    id: 'm3-ao-luar',
+    title: 'Ao Luar (Au Clair de la Lune)',
+    goal:
+      'A melodia passa de uma mão para a outra. A direita começa; no compasso 9 a melodia desce para a esquerda, que muda para a posição de Sol (polegar no Ré, mindinho no Sol). No compasso 13 a direita volta.',
+    bpm: 80,
+    beatsPerBar: 4,
+    right:
+      'C4/1@1 C4/1@1 C4/1@1 D4/1@2 | E4/2@3 D4/2@2 | C4/1@1 E4/1@3 D4/1@2 D4/1@2 | C4/4@1 | ' +
+      'C4/1@1 C4/1@1 C4/1@1 D4/1@2 | E4/2@3 D4/2@2 | C4/1@1 E4/1@3 D4/1@2 D4/1@2 | C4/4@1 | ' +
+      '-/4 | -/4 | -/4 | -/4 | ' +
+      'C4/1@1 C4/1@1 C4/1@1 D4/1@2 | E4/2@3 D4/2@2 | C4/1@1 E4/1@3 D4/1@2 D4/1@2 | C4/4@1',
+    left:
+      'C3/4@5 | C3/2@5 G3/2@1 | C3/2@5 G3/2@1 | C3/4@5 | ' +
+      'C3/4@5 | C3/2@5 G3/2@1 | C3/2@5 G3/2@1 | C3/4@5 | ' +
+      'D4/1@1 D4/1@1 D4/1@1 D4/1@1 | A3/2@4 A3/2@4 | D4/1@1 C4/1@2 B3/1@3 A3/1@4 | G3/4@5 | ' +
+      'C3/4@5 | C3/2@5 G3/2@1 | C3/2@5 G3/2@1 | C3/4@5',
+  },
+  {
+    id: 'm3-valsa',
+    title: 'Valsa em Dó (3/4)',
+    goal:
+      'Compasso de três tempos: conte "1, 2, 3". A esquerda faz o balanço da valsa: uma nota grave no 1 e o Sol no 2 e no 3 ("pum, pá, pá"). A direita canta a melodia por cima.',
+    bpm: 84,
+    beatsPerBar: 3,
+    right:
+      'E4/2@3 F4/1@4 | G4/3@5 | F4/2@4 E4/1@3 | D4/3@2 | D4/2@2 E4/1@3 | F4/3@4 | E4/2@3 D4/1@2 | C4/3@1 | ' +
+      'E4/1@3 F4/1@4 G4/1@5 | G4/2@5 E4/1@3 | F4/1@4 E4/1@3 D4/1@2 | D4/2@2 F4/1@4 | E4/1@3 F4/1@4 G4/1@5 | E4/2@3 C4/1@1 | D4/1@2 E4/1@3 D4/1@2 | C4/3@1',
+    left:
+      'C3/1@5 G3/1@1 G3/1@1 | C3/1@5 G3/1@1 G3/1@1 | D3/1@4 G3/1@1 G3/1@1 | D3/1@4 G3/1@1 G3/1@1 | ' +
+      'D3/1@4 G3/1@1 G3/1@1 | D3/1@4 G3/1@1 G3/1@1 | C3/1@5 G3/1@1 G3/1@1 | C3/1@5 G3/1@1 G3/1@1 | ' +
+      'C3/1@5 G3/1@1 G3/1@1 | C3/1@5 G3/1@1 G3/1@1 | D3/1@4 G3/1@1 G3/1@1 | D3/1@4 G3/1@1 G3/1@1 | ' +
+      'C3/1@5 G3/1@1 G3/1@1 | C3/1@5 G3/1@1 G3/1@1 | D3/1@4 G3/1@1 G3/1@1 | C3/3@5',
+  },
+  {
+    id: 'm3-minueto-sol',
+    title: 'Minueto em Sol (Petzold)',
+    goal:
+      'O famoso minueto do Caderno de Anna Magdalena Bach, em Sol maior: o Fá é sempre sustenido (a tecla preta). A direita muda de posição várias vezes, siga os números dos dedos. A esquerda fica na posição de Sol, com notas longas.',
+    bpm: 66,
+    beatsPerBar: 3,
+    keyFifths: 1,
+    right:
+      'D5/1@5 G4/0.5@1 A4/0.5@2 B4/0.5@3 C5/0.5@4 | D5/1@5 G4/1@1 G4/1@1 | E5/1@3 C5/0.5@1 D5/0.5@2 E5/0.5@3 F#5/0.5@4 | G5/1@5 G4/1@1 G4/1@1 | ' +
+      'C5/1@4 D5/0.5@5 C5/0.5@4 B4/0.5@3 A4/0.5@2 | B4/1@3 C5/0.5@4 B4/0.5@3 A4/0.5@2 G4/0.5@1 | F#4/1@1 G4/0.5@2 A4/0.5@3 B4/0.5@4 G4/0.5@2 | A4/3@3 | ' +
+      'D5/1@5 G4/0.5@1 A4/0.5@2 B4/0.5@3 C5/0.5@4 | D5/1@5 G4/1@1 G4/1@1 | E5/1@3 C5/0.5@1 D5/0.5@2 E5/0.5@3 F#5/0.5@4 | G5/1@5 G4/1@1 G4/1@1 | ' +
+      'C5/1@4 D5/0.5@5 C5/0.5@4 B4/0.5@3 A4/0.5@2 | B4/1@3 C5/0.5@4 B4/0.5@3 A4/0.5@2 G4/0.5@1 | A4/1@3 B4/0.5@4 A4/0.5@3 G4/0.5@2 F#4/0.5@1 | G4/3@2',
+    left:
+      'G3/2@5 A3/1@4 | B3/3@3 | C4/3@2 | B3/3@3 | A3/3@4 | G3/3@5 | D4/2@1 B3/1@3 | D4/1@1 C4/1@2 A3/1@4 | ' +
+      'G3/2@5 A3/1@4 | B3/3@3 | C4/3@2 | B3/3@3 | A3/3@4 | G3/3@5 | D4/2@1 C4/1@2 | B3/1@3 G3/2@5',
+  },
+];
+
 export const MODULES: Module[] = [
   {
     id: 'm1',
@@ -258,11 +386,17 @@ export const MODULES: Module[] = [
     description: 'Clave de sol e clave de fá, o Dó central nas duas, intervalos e colcheias. As lições abrem na partitura.',
     lessons: MODULE_2_SOURCES.map(buildSong),
   },
+  {
+    id: 'm3',
+    title: 'Módulo 3: Mãos independentes',
+    description:
+      'As duas mãos ao mesmo tempo: em paralelo, em espelho, uma segurando e a outra andando, a melodia passando de mão, valsa em 3/4 e o Minueto em Sol.',
+    lessons: MODULE_3_SOURCES.map(buildSong),
+  },
 ];
 
 /** Modules planned for later versions, shown in the path as "em breve". */
 export const UPCOMING_MODULES = [
-  { title: 'Módulo 3: Mãos independentes', description: 'Melodia e acompanhamento ao mesmo tempo, novas posições.' },
   { title: 'Módulo 4: Acordes', description: 'Tríades maiores e menores, cifras, acompanhar uma música.' },
   { title: 'Módulo 5: Escalas e tonalidades', description: 'Passagem do polegar, Sol maior, Fá maior, Lá menor.' },
   { title: 'Módulo 6: Intermediário', description: 'Inversões, arpejos, síncope, pedal e dinâmica.' },

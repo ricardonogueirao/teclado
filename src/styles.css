@@ -532,6 +532,14 @@ section > h2 {
   min-width: 0;
 }
 
+.lesson-bpm {
+  flex: none;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .lesson-score {
   font-size: 13px;
   color: var(--muted);
@@ -614,6 +622,7 @@ section > h2 {
 
 .hud {
   display: flex;
+  align-items: center;
   gap: 14px;
   font-size: 13px;
   color: var(--muted);
@@ -773,8 +782,146 @@ section > h2 {
 
 .result-stats {
   display: flex;
-  gap: 22px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 22px;
   margin: 4px 0;
+}
+
+.timing-summary {
+  color: var(--muted);
+  max-width: 420px;
+}
+
+/* ---------- Tempo and metronome ---------- */
+
+.tempo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tempo button.small {
+  width: 28px;
+  padding: 3px 0;
+  font-weight: 700;
+}
+
+.tempo-value {
+  min-width: 62px;
+  font-variant-numeric: tabular-nums;
+}
+
+.metro-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
+.metro-bpm {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+}
+
+.metro-bpm b {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Timing meter ---------- */
+
+.timing {
+  width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.timing-ruler {
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  background: rgba(251, 146, 60, 0.22);
+  overflow: hidden;
+}
+
+.timing-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.timing-zone.good {
+  background: rgba(253, 224, 71, 0.25);
+}
+
+.timing-zone.perfect {
+  background: rgba(52, 211, 153, 0.35);
+}
+
+.timing-center {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.timing-ruler i {
+  position: absolute;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.timing-ruler i.latest {
+  top: 1px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.timing-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.timing-labels b {
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.timing-labels b.perfect {
+  color: var(--green);
+}
+
+.timing-labels b.good {
+  color: var(--yellow);
+}
+
+.timing-labels b.off {
+  color: #fb923c;
+}
+
+.timing-labels b.bad {
+  color: var(--red);
 }
 
 .result-stats dt {

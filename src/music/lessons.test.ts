@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MODULE_1_SOURCES, MODULE_2_SOURCES, MODULES } from './lessons';
+import { MODULE_1_SOURCES, MODULE_2_SOURCES, MODULE_3_SOURCES, MODULES } from './lessons';
 import { noteValue } from '../notation/sheetLayout';
 import { nameToMidi, seq, seqLength } from './notation';
 import { FANTOM_6_RANGE } from './notes';
@@ -21,7 +21,7 @@ describe('notation', () => {
 });
 
 describe('lessons', () => {
-  it.each([...MODULE_1_SOURCES, ...MODULE_2_SOURCES].map((s) => [s.title, s] as const))('%s has whole bars in both hands', (_t, src) => {
+  it.each([...MODULE_1_SOURCES, ...MODULE_2_SOURCES, ...MODULE_3_SOURCES].map((s) => [s.title, s] as const))('%s has whole bars in both hands', (_t, src) => {
     const lengths = [src.right, src.left].filter(Boolean).map((t) => seqLength(t!));
     for (const len of lengths) expect(len % src.beatsPerBar).toBe(0);
     if (lengths.length === 2) expect(lengths[0]).toBe(lengths[1]);
@@ -53,6 +53,17 @@ describe('lessons', () => {
         expect(chord || b.start >= a.start + a.dur - 1e-9, `${hand} ${a.start}/${b.start}`).toBe(true);
       }
     }
+  });
+
+  it('module 3 uses both hands, with a finger on every note', () => {
+    for (const src of MODULE_3_SOURCES) {
+      expect(src.right && src.left, src.title).toBeTruthy();
+      for (const n of [...seq('R', src.right!), ...seq('L', src.left!)]) expect(n.finger, src.title).toBeDefined();
+    }
+  });
+
+  it('every lesson has a whole-number tempo for the keyboard metronome', () => {
+    for (const song of MODULES.flatMap((m) => m.lessons)) expect(Number.isInteger(song.bpm), song.title).toBe(true);
   });
 
   it('has unique ids', () => {

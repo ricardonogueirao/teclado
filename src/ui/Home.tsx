@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { sound } from '../audio/sound';
+import type { MetronomeSource } from '../engine/practice';
 import { AUTO, NO_OUTPUT, midi as connection, type KeyEvent } from '../midi/midiConnection';
 import { MODULES, UPCOMING_MODULES } from '../music/lessons';
 import { FANTOM_6_RANGE, noteLabelWithOctave, type NameStyle } from '../music/notes';
+import { tempoLabel } from '../music/types';
 import { canInstall, install, onInstallChange } from '../pwa';
 import { save, streak, type SavedState, type Settings } from '../store/progress';
 import type { LibrarySong } from '../store/library';
@@ -10,7 +12,7 @@ import { Keyboard, type KeyState } from './Keyboard';
 import { Library } from './Library';
 import { useMidi } from './useMidi';
 import { useSize } from './useSize';
-import { Segmented, Stars } from './widgets';
+import { METRONOME_OPTIONS, Segmented, Stars } from './widgets';
 
 interface Props {
   state: SavedState;
@@ -81,6 +83,9 @@ export function Home({ state, setState, onOpenLesson, library, onLibraryChange }
                     <button className="lesson-row" onClick={() => onOpenLesson(lesson.id)}>
                       <span className={`lesson-num ${progress && progress.stars > 0 ? 'done' : ''}`}>{i + 1}</span>
                       <span className="lesson-title">{lesson.title}</span>
+                      <span className="lesson-bpm" title="Andamento para o metrônomo">
+                        {tempoLabel(lesson)}
+                      </span>
                       {progress ? (
                         <>
                           <Stars count={progress.stars} />
@@ -128,14 +133,12 @@ export function Home({ state, setState, onOpenLesson, library, onLibraryChange }
             />
             Mostrar nomes nas teclas
           </label>
-          <label className="control check">
-            <input
-              type="checkbox"
-              checked={state.settings.metronome}
-              onChange={(e) => updateSettings({ metronome: e.target.checked })}
-            />
-            Metrônomo ligado ao abrir uma lição
-          </label>
+          <Segmented<MetronomeSource>
+            label="Metrônomo nas lições"
+            value={state.settings.metronome}
+            onChange={(metronome) => updateSettings({ metronome })}
+            options={METRONOME_OPTIONS}
+          />
         </div>
         <PortSettings />
       </section>

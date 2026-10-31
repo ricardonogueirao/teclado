@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { arrivalTime } from './midiConnection';
 import { KeyMerger, parseMidi } from './parseMidi';
 
 describe('parseMidi', () => {
@@ -28,5 +29,17 @@ describe('KeyMerger', () => {
   });
   it('ignores a release for a key never pressed', () => {
     expect(new KeyMerger().release(60, 1)).toBe(false);
+  });
+});
+
+describe('arrival time of a key', () => {
+  it('uses the time Chrome stamped on the MIDI message', () => {
+    expect(arrivalTime(1000, 1012)).toBe(1000);
+  });
+  it('falls back to now when the stamp is missing or makes no sense', () => {
+    expect(arrivalTime(undefined, 1012)).toBe(1012);
+    expect(arrivalTime(0, 1012)).toBe(1012);
+    expect(arrivalTime(5000, 1012)).toBe(1012);
+    expect(arrivalTime(10, 1012)).toBe(1012);
   });
 });

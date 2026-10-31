@@ -50,3 +50,14 @@ export function hasHand(song: Song, hand: Hand): boolean {
 export function timeSignature(song: Song): [number, number] {
   return song.timeSig ?? [song.beatsPerBar, 4];
 }
+
+/** Whole-number tempo, as set on the keyboard's metronome. */
+export function songBpm(song: Song): number {
+  return Math.round(song.bpm);
+}
+
+/** "72 bpm", or "84 bpm · 3/4" when the bar is not 4/4. */
+export function tempoLabel(song: Song, bpm = songBpm(song)): string {
+  const [num, den] = timeSignature(song);
+  return num === 4 && den === 4 ? `${bpm} bpm` : `${bpm} bpm · ${num}/${den}`;
+}

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { ACCEPTED } from '../import/importFile';
-import { songLengthBeats } from '../music/types';
+import { songLengthBeats, tempoLabel } from '../music/types';
 import type { LibrarySong } from '../store/library';
 import type { SavedState } from '../store/progress';
 import { ImportDialog } from './ImportDialog';
@@ -79,7 +79,7 @@ export function Library({ library, state, onChange, onOpen }: Props) {
                   <span className="lesson-title">
                     {song.title}
                     <span className="muted small song-meta">
-                      {bars} compassos · {song.bpm} bpm
+                      {bars} compassos · {tempoLabel(song)}
                     </span>
                   </span>
                   {progress ? (

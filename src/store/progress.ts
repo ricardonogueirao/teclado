@@ -1,4 +1,5 @@
 // Progress and settings, saved in this browser on this Mac (no account, no server).
+import type { MetronomeSource, Mode } from '../engine/practice';
 import type { NameStyle } from '../music/notes';
 import type { ViewMode } from '../music/types';
 
@@ -12,7 +13,10 @@ export interface LessonProgress {
 export interface Settings {
   nameStyle: NameStyle;
   showNamesOnKeys: boolean;
-  metronome: boolean;
+  /** Who keeps the beat: the Roland's own metronome, the app, or nobody. */
+  metronome: MetronomeSource;
+  /** Practice mode a lesson opens in (the last one chosen). */
+  mode: Mode;
   /** View for lessons that do not ask for one. */
   view: ViewMode;
   showNamesOnSheet: boolean;
@@ -28,7 +32,8 @@ const KEY = 'teclado:v1';
 export const DEFAULT_SETTINGS: Settings = {
   nameStyle: 'both',
   showNamesOnKeys: true,
-  metronome: true,
+  metronome: 'keyboard',
+  mode: 'perform',
   view: 'both',
   showNamesOnSheet: true,
 };
@@ -45,11 +50,22 @@ export function load(): SavedState {
     return {
       lessons: data.lessons ?? {},
       practiceDays: data.practiceDays ?? [],
-      settings: { ...DEFAULT_SETTINGS, ...(data.settings ?? {}) },
+      settings: migrateSettings(data.settings),
     };
   } catch {
     return empty();
   }
+}
+
+/** Fills in missing settings and updates ones saved by older versions. */
+export function migrateSettings(saved: Partial<Settings> | undefined): Settings {
+  const settings = { ...DEFAULT_SETTINGS, ...(saved ?? {}) };
+  // Before: a plain on/off. "On" now means the Roland's metronome, which is how the lessons are played.
+  const old = settings.metronome as unknown;
+  if (typeof old === 'boolean') settings.metronome = old ? 'keyboard' : 'off';
+  if (!['keyboard', 'app', 'off'].includes(settings.metronome)) settings.metronome = DEFAULT_SETTINGS.metronome;
+  if (!['wait', 'perform', 'listen'].includes(settings.mode)) settings.mode = DEFAULT_SETTINGS.mode;
+  return settings;
 }
 
 export function save(state: SavedState): void {

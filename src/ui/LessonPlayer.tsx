@@ -5,19 +5,22 @@ import {
   scoreOf,
   starsFor,
   type EngineEvent,
+  type Grade,
   type HandsChoice,
+  type MetronomeSource,
   type Mode,
   type Stats,
 } from '../engine/practice';
 import { midi, type KeyEvent } from '../midi/midiConnection';
 import { FANTOM_6_RANGE, noteLabel } from '../music/notes';
-import { hasHand, songLengthBeats, type Song, type ViewMode } from '../music/types';
+import { hasHand, songBpm, songLengthBeats, tempoLabel, timeSignature, type Song, type ViewMode } from '../music/types';
 import { recordResult, save, type SavedState, type Settings } from '../store/progress';
 import { COLORS, FallingNotes, type Popup } from './FallingNotes';
 import { Keyboard, type KeyState } from './Keyboard';
 import { keyLayout } from './keyboardLayout';
 import { SheetMusic } from './SheetMusic';
-import { Segmented, Stars } from './widgets';
+import { TimingMeter, timingLabel, type Judgement } from './TimingMeter';
+import { METRONOME_OPTIONS, Segmented, Stars } from './widgets';
 import { useSize } from './useSize';
 
 type Phase = 'ready' | 'playing' | 'paused' | 'done';
@@ -26,6 +29,8 @@ interface Result {
   score: number;
   stars: number;
   stats: Stats;
+  /** Timing of each note played, in ms (performance mode). */
+  timing: number[];
   counted: boolean;
   newBest: boolean;
 }
@@ -49,10 +54,18 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
   const bars = songLengthBeats(song) / song.beatsPerBar;
   const settings = state.settings;
 
-  const [mode, setMode] = useState<Mode>('wait');
+  const baseBpm = songBpm(song);
+  const minBpm = Math.max(20, Math.round(baseBpm * 0.4));
+  const maxBpm = Math.max(baseBpm, Math.round(baseBpm * 1.2));
+  const [timeNum, timeDen] = timeSignature(song);
+
+  const [mode, setMode] = useState<Mode>(settings.mode === 'listen' ? 'perform' : settings.mode);
   const [hands, setHands] = useState<HandsChoice>('both');
-  const [tempo, setTempo] = useState(1);
-  const [metronome, setMetronome] = useState(settings.metronome);
+  // Whole beats per minute, so the same number can be set on the Roland's metronome.
+  const [bpm, setBpm] = useState(baseBpm);
+  const tempo = bpm / song.bpm;
+  const [metronome, setMetronome] = useState<MetronomeSource>(settings.metronome);
+  const roland = metronome === 'keyboard';
   const [view, setView] = useState<ViewMode>(song.view ?? settings.view);
   const [loopOn, setLoopOn] = useState(false);
   const [loopFrom, setLoopFrom] = useState(1);
@@ -65,6 +78,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
 
   const engineRef = useRef<PracticeEngine | null>(null);
   const popupsRef = useRef<Popup[]>([]);
+  const lastJudgeRef = useRef<Judgement | null>(null);
   const pressedRef = useRef(new Map<number, KeyState>());
   const phaseRef = useRef<Phase>('ready');
   const frameRef = useRef(0);
@@ -107,7 +121,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
     for (const ev of events) {
       switch (ev.type) {
         case 'click':
-          sound.click(ev.downbeat);
+          sound.click(ev.downbeat, ev.at);
           break;
         case 'accOn':
           accOn(ev.midi);
@@ -116,13 +130,23 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
           accOff(ev.midi);
           break;
         case 'judged':
-          if (ev.result === 'perfect') popupAt(ev.midi, mode === 'wait' ? 'Certo!' : 'Perfeito!', COLORS.hit);
-          else if (ev.result === 'good')
-            popupAt(ev.midi, (ev.offsetMs ?? 0) < 0 ? 'Adiantado' : 'Atrasado', COLORS.left);
-          else popupAt(ev.midi, 'Perdeu', COLORS.miss);
+          if (ev.result === 'miss') {
+            popupAt(ev.midi, 'Perdeu', COLORS.miss);
+            lastJudgeRef.current = { kind: 'miss' };
+          } else if (mode === 'wait') {
+            popupAt(ev.midi, 'Certo!', COLORS.hit);
+          } else {
+            const offsetMs = ev.offsetMs ?? 0;
+            popupAt(ev.midi, timingLabel(ev.result, offsetMs, true), GRADE_COLORS[ev.result]);
+            lastJudgeRef.current = { kind: ev.result, offsetMs };
+          }
           break;
         case 'wrong':
           popupAt(ev.midi, '✗', COLORS.miss);
+          if (ev.instead !== undefined) {
+            popupAt(ev.instead, 'Errou', COLORS.miss);
+            lastJudgeRef.current = { kind: 'wrong' };
+          }
           break;
         case 'loop':
           setLoopInfo((prev) => ({ passes: (prev?.passes ?? 0) + 1, lastScore: ev.lastScore }));
@@ -169,6 +193,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
     const loop = loopOn ? { startBar: Math.min(loopFrom, loopTo), endBar: Math.max(loopFrom, loopTo) } : null;
     engineRef.current = new PracticeEngine(song, { mode, hands, tempo, loop, metronome, countInBars: 1 });
     popupsRef.current = [];
+    lastJudgeRef.current = null;
     setLoopInfo(null);
     setResult(null);
     lastVersion.current = -1;
@@ -194,7 +219,14 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
       save(next);
       setState(next);
     }
-    setResult({ score, stars, stats: { ...engine.stats }, counted, newBest: counted && score > prevBest });
+    setResult({
+      score,
+      stars,
+      stats: { ...engine.stats },
+      timing: [...engine.timing],
+      counted,
+      newBest: counted && score > prevBest,
+    });
     setPhaseBoth('done');
   };
 
@@ -225,11 +257,21 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
     stopLoop();
     makeEngine();
     setPhaseBoth('ready');
+    // Switching to or from the Roland's metronome changes how the music starts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [song, mode, hands, loopOn, loopFrom, loopTo]);
+  }, [song, mode, hands, loopOn, loopFrom, loopTo, roland]);
 
   useEffect(() => engineRef.current?.setTempo(tempo), [tempo]);
   useEffect(() => engineRef.current?.setMetronome(metronome), [metronome]);
+
+  const chooseMode = (m: Mode) => {
+    setMode(m);
+    if (m !== 'listen') updateSettings({ mode: m });
+  };
+  const chooseMetronome = (m: MetronomeSource) => {
+    setMetronome(m);
+    updateSettings({ metronome: m });
+  };
 
   // Keys from the Fantom, the computer keyboard or the mouse.
   const onKeyRef = useRef<(e: KeyEvent) => void>(() => {});
@@ -273,7 +315,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, hands, tempo, metronome, loopOn, loopFrom, loopTo]);
+  }, [mode, hands, bpm, metronome, loopOn, loopFrom, loopTo]);
 
   useEffect(
     () => () => {
@@ -298,12 +340,20 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
   pressedRef.current.forEach((st, m) => keyStates.set(m, st));
 
   const stats = engine?.stats;
-  const done = stats ? stats.perfect + stats.good : 0;
+  const done = stats ? stats.perfect + stats.good + stats.off : 0;
+  // In performance mode a wrong key either took a note's place or was one key too many.
+  const errors = stats ? (mode === 'wait' ? stats.wrong : stats.wrong + stats.extra) : 0;
   const currentBar = engine ? Math.max(1, Math.min(bars, Math.floor(engine.pos / song.beatsPerBar) + 1)) : 1;
-  const waitingFor =
-    engine && engine.waiting && mode === 'wait'
-      ? engine.expectedKeys().map((m) => noteLabel(m, settings.nameStyle, flats)).join(' + ')
-      : null;
+  const expectedList = engine ? engine.expectedNotes() : [];
+  const bothHandsNow = new Set(expectedList.map((n) => n.hand)).size > 1;
+  const expectedNames = expectedList
+    .map((n) => noteLabel(n.midi, settings.nameStyle, flats) + (bothHandsNow ? (n.hand === 'L' ? ' (esq.)' : ' (dir.)') : ''))
+    .join(' + ');
+  let banner: string | null = null;
+  if (engine && phase === 'playing' && expectedNames) {
+    if (engine.syncing) banner = `Toque ${expectedNames} junto com um clique do Roland`;
+    else if (engine.waiting && mode === 'wait') banner = `Toque: ${expectedNames}`;
+  }
   const output = midi.activeOutput();
   // In "both", the sheet takes the top part of the stage and the falling notes the rest.
   const sheetHeight =
@@ -318,7 +368,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
         <div className="player-title">
           <h1>{song.title}</h1>
           <span className="muted">
-            Compasso {currentBar} de {bars} · {Math.round(song.bpm * tempo)} bpm
+            Compasso {currentBar} de {bars} · {tempoLabel(song, bpm)}
           </span>
         </div>
         <Segmented<ViewMode>
@@ -341,7 +391,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
                 <b>{done}</b>/{stats.total} notas
               </span>
               <span className="hud-item wrong">
-                <b>{stats.wrong}</b> {stats.wrong === 1 ? 'errada' : 'erradas'}
+                <b>{errors}</b> {errors === 1 ? 'errada' : 'erradas'}
               </span>
               {mode === 'perform' && (
                 <span className="hud-item missed">
@@ -350,6 +400,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
               )}
             </>
           )}
+          {mode === 'perform' && engine && <TimingMeter timing={engine.timing} last={lastJudgeRef.current} />}
           {loopInfo && (
             <span className="hud-item">
               Volta {loopInfo.passes + 1} · anterior {loopInfo.lastScore}%
@@ -362,10 +413,14 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
         <Segmented<Mode>
           label="Modo"
           value={mode}
-          onChange={setMode}
+          onChange={chooseMode}
           options={[
-            { value: 'wait', label: 'Espera', hint: 'A música para e espera você acertar' },
-            { value: 'perform', label: 'Apresentação', hint: 'A música segue no tempo e você recebe nota' },
+            {
+              value: 'perform',
+              label: 'Apresentação',
+              hint: 'A música segue no tempo, mesmo se você errar: o erro fica marcado e você continua',
+            },
+            { value: 'wait', label: 'Espera', hint: 'A música para em cada nota até você acertar' },
             { value: 'listen', label: 'Ouvir', hint: 'O app toca a lição para você ouvir' },
           ]}
         />
@@ -381,21 +436,30 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
             ]}
           />
         )}
-        <label className="control">
-          <span className="control-label">Velocidade {Math.round(tempo * 100)}%</span>
-          <input
-            type="range"
-            min={40}
-            max={120}
-            step={5}
-            value={Math.round(tempo * 100)}
-            onChange={(e) => setTempo(Number(e.target.value) / 100)}
-          />
-        </label>
-        <label className="control check">
-          <input type="checkbox" checked={metronome} onChange={(e) => setMetronome(e.target.checked)} />
-          Metrônomo
-        </label>
+        <div className="control">
+          <span className="control-label">
+            Andamento {bpm === baseBpm ? '(original)' : `(${Math.round(tempo * 100)}% do original, ${baseBpm})`}
+          </span>
+          <div className="tempo">
+            <button className="small" onClick={() => setBpm((b) => Math.max(minBpm, b - 1))} aria-label="1 bpm mais lento">
+              −
+            </button>
+            <input
+              type="range"
+              min={minBpm}
+              max={maxBpm}
+              step={1}
+              value={bpm}
+              onChange={(e) => setBpm(Number(e.target.value))}
+              aria-label="Andamento"
+            />
+            <button className="small" onClick={() => setBpm((b) => Math.min(maxBpm, b + 1))} aria-label="1 bpm mais rápido">
+              +
+            </button>
+            <b className="tempo-value">{bpm} bpm</b>
+          </div>
+        </div>
+        <Segmented<MetronomeSource> label="Metrônomo" value={metronome} onChange={chooseMetronome} options={METRONOME_OPTIONS} />
         <div className="control loop">
           <label className="check">
             <input type="checkbox" checked={loopOn} onChange={(e) => setLoopOn(e.target.checked)} />
@@ -477,13 +541,23 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
             />
           </div>
         )}
-        {waitingFor && <div className="waiting">Toque: {waitingFor}</div>}
+        {banner && <div className="waiting">{banner}</div>}
 
         {phase === 'ready' && (
           <div className="overlay">
             <div className="card intro">
               <h2>{song.title}</h2>
               <p>{song.goal}</p>
+              <div className="metro-box">
+                <div className="metro-bpm">
+                  <span className="muted small">Metrônomo</span>
+                  <b>{bpm} bpm</b>
+                  <span className="muted small">
+                    compasso {timeNum}/{timeDen}
+                  </span>
+                </div>
+                <p className="small">{metronomeHelp(metronome, mode, bpm)}</p>
+              </div>
               {view !== 'sheet' && (
                 <ul className="legend">
                   {hasHand(song, 'R') && (
@@ -526,8 +600,8 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
                     : 'Modo Espera: as notas param na linha até você tocar a tecla certa.')}
                 {mode === 'perform' &&
                   (view === 'sheet'
-                    ? 'Modo Apresentação: o cursor não para. Toque cada nota quando ele passar por ela.'
-                    : 'Modo Apresentação: a música não para. Toque cada nota quando ela encostar na linha.')}
+                    ? 'Modo Apresentação: o cursor não para. Toque cada nota quando ele passar por ela. Se errar, o erro fica marcado e você segue para as próximas.'
+                    : 'Modo Apresentação: a música não para. Toque cada nota quando ela encostar na linha. Se errar, o erro fica marcado e você segue para as próximas.')}
                 {mode === 'listen' && 'Modo Ouvir: escute a lição antes de tocar.'}{' '}
                 Acompanhamento: {output ? output.name : 'som do computador'}.
               </p>
@@ -548,26 +622,45 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
               <p>{resultMessage(result.score)}</p>
               <dl className="result-stats">
                 <div>
-                  <dt>{mode === 'wait' ? 'Acertos' : 'Perfeitas'}</dt>
+                  <dt>{mode === 'wait' ? 'Acertos' : 'No tempo'}</dt>
                   <dd>{result.stats.perfect}</dd>
                 </div>
                 {mode === 'perform' && (
                   <>
                     <div>
-                      <dt>Fora do tempo</dt>
+                      <dt>Um pouco fora</dt>
                       <dd>{result.stats.good}</dd>
+                    </div>
+                    <div>
+                      <dt>Fora do tempo</dt>
+                      <dd>{result.stats.off}</dd>
+                    </div>
+                    <div>
+                      <dt>Notas erradas</dt>
+                      <dd>{result.stats.wrong}</dd>
                     </div>
                     <div>
                       <dt>Perdidas</dt>
                       <dd>{result.stats.missed}</dd>
                     </div>
+                    {result.stats.extra > 0 && (
+                      <div>
+                        <dt>Teclas a mais</dt>
+                        <dd>{result.stats.extra}</dd>
+                      </div>
+                    )}
                   </>
                 )}
-                <div>
-                  <dt>Teclas erradas</dt>
-                  <dd>{result.stats.wrong}</dd>
-                </div>
+                {mode === 'wait' && (
+                  <div>
+                    <dt>Teclas erradas</dt>
+                    <dd>{result.stats.wrong}</dd>
+                  </div>
+                )}
               </dl>
+              {mode === 'perform' && timingSummary(result.timing) && (
+                <p className="small timing-summary">{timingSummary(result.timing)}</p>
+              )}
               {!result.counted && (
                 <p className="muted small">
                   Treino de mão separada ou de trecho não conta na trilha. Toque a lição inteira com as duas mãos
@@ -606,6 +699,28 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
       />
     </div>
   );
+}
+
+const GRADE_COLORS: Record<Grade, string> = { perfect: COLORS.hit, good: COLORS.wait, off: COLORS.left };
+
+function metronomeHelp(metronome: MetronomeSource, mode: Mode, bpm: number): string {
+  if (mode === 'listen') return `O app toca a lição a ${bpm} bpm.`;
+  if (metronome === 'keyboard') {
+    if (mode === 'wait') return 'No modo Espera a música para em cada nota: o metrônomo do Roland não é necessário.';
+    return `No Roland, ajuste o andamento para ${bpm} e ligue o metrônomo: o clique sai no seu fone. As notas param na primeira: toque-a junto com um clique e a música segue no tempo do Roland.`;
+  }
+  if (metronome === 'app') return 'O app faz o clique no som do computador. Para ouvir no fone do Roland, escolha Metrônomo: Do Roland.';
+  return 'Sem clique durante a música, só a contagem antes de começar.';
+}
+
+/** One line on the player's timing tendency, once there are enough notes to tell. */
+function timingSummary(timing: number[]): string | null {
+  if (timing.length < 4) return null;
+  const mean = timing.reduce((a, b) => a + b, 0) / timing.length;
+  const spread = timing.reduce((a, b) => a + Math.abs(b - mean), 0) / timing.length;
+  const ms = Math.round(Math.abs(mean));
+  const trend = ms <= 15 ? 'Na média você tocou no tempo' : `Na média você tocou ${ms} ms ${mean < 0 ? 'adiantado' : 'atrasado'}`;
+  return `${trend}; de uma nota para outra, a diferença típica foi de ${Math.round(spread)} ms.`;
 }
 
 function resultMessage(score: number): string {

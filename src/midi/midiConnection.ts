@@ -161,7 +161,7 @@ export class MidiConnection {
     if (!msg.data) return;
     const event = parseMidi(msg.data);
     if (!event) return;
-    const at = performance.now();
+    const at = arrivalTime(msg.timeStamp, performance.now());
     this.log = [{ at, port: portName, event }, ...this.log].slice(0, 12);
 
     if (event.type === 'noteOn') {
@@ -186,6 +186,15 @@ export class MidiConnection {
   private emitChange(): void {
     this.changeListeners.forEach((fn) => fn());
   }
+}
+
+/**
+ * When a key was really pressed. Chrome stamps each MIDI message when it arrives from USB
+ * (same clock as performance.now()); the page may only get to it a frame later.
+ */
+export function arrivalTime(stamp: number | undefined, now: number): number {
+  if (!stamp || !Number.isFinite(stamp) || stamp > now + 5 || now - stamp > 500) return now;
+  return Math.min(stamp, now);
 }
 
 export const midi = new MidiConnection();

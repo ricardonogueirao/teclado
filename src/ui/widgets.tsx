@@ -1,3 +1,5 @@
+import type { MetronomeSource } from '../engine/practice';
+
 interface Option<T> {
   value: T;
   label: string;
@@ -47,3 +49,14 @@ export function Stars({ count, size = 16 }: { count: number; size?: number }) {
     </span>
   );
 }
+
+/** The metronome choices, shared by the home screen and the lesson. */
+export const METRONOME_OPTIONS: { value: MetronomeSource; label: string; hint: string }[] = [
+  {
+    value: 'keyboard',
+    label: 'Do Roland',
+    hint: 'Você liga o metrônomo do Roland e ouve no seu fone. A música começa na sua primeira nota, junto com o clique.',
+  },
+  { value: 'app', label: 'Do app', hint: 'O app faz o clique, no som do computador.' },
+  { value: 'off', label: 'Desligado', hint: 'Só a contagem antes de começar.' },
+];

@@ -20,7 +20,7 @@ const ANCHOR = 0.3;
 function classFor(notes: SongNote[], states: Map<SongNote, NoteState>, expected: Set<SongNote>): string {
   const sts = notes.map((n) => states.get(n)).filter((s): s is NoteState => !!s);
   if (sts.length === 0) return 'out';
-  if (sts.some((s) => s.status === 'missed')) return 'miss';
+  if (sts.some((s) => s.status === 'missed' || s.status === 'wrong')) return 'miss';
   if (sts.every((s) => s.status === 'hit')) return 'hit';
   if (sts.every((s) => s.status === 'auto')) return sts.some((s) => s.sounding) ? 'auto playing' : 'auto';
   if (notes.some((n) => expected.has(n))) return 'now';

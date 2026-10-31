@@ -21,9 +21,10 @@ class Sound {
     if (ctx.state === 'suspended') void ctx.resume();
   }
 
-  click(downbeat: boolean): void {
+  /** Plays a metronome click so it is heard at `at` (performance.now() clock), or right away. */
+  click(downbeat: boolean, at?: number): void {
     const ctx = this.context();
-    const t = ctx.currentTime;
+    const t = at === undefined ? ctx.currentTime : this.audioTimeFor(at);
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'square';
@@ -80,6 +81,24 @@ class Sound {
 
   allOff(): void {
     [...this.voices.keys()].forEach((m) => this.noteOff(m));
+  }
+
+  /**
+   * Audio clock time at which a sound comes out of the speakers at `at` (performance.now() clock).
+   * Takes the Mac's output delay into account, so the click is heard on the beat, not after it.
+   */
+  private audioTimeFor(at: number): number {
+    const ctx = this.ctx!;
+    const now = ctx.currentTime;
+    const stamp = typeof ctx.getOutputTimestamp === 'function' ? ctx.getOutputTimestamp() : null;
+    let t: number;
+    if (stamp?.contextTime && stamp.performanceTime) {
+      t = stamp.contextTime + (at - stamp.performanceTime) / 1000;
+    } else {
+      const delay = (ctx.outputLatency || 0) + (ctx.baseLatency || 0);
+      t = now + (at - performance.now()) / 1000 - delay;
+    }
+    return Math.max(now, t);
   }
 
   private context(): AudioContext {
