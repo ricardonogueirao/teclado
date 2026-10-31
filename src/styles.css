@@ -372,6 +372,7 @@ input:disabled {
 
 .home-stats {
   display: flex;
+  align-items: center;
   gap: 18px;
   color: var(--muted);
 }
@@ -505,10 +506,6 @@ section > h2 {
   text-align: left;
   background: var(--panel);
   padding: 10px 12px;
-}
-
-.lesson-row.locked {
-  opacity: 0.45;
 }
 
 .lesson-num {

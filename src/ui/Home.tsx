@@ -3,7 +3,8 @@ import { sound } from '../audio/sound';
 import { AUTO, NO_OUTPUT, midi as connection, type KeyEvent } from '../midi/midiConnection';
 import { MODULES, UPCOMING_MODULES } from '../music/lessons';
 import { FANTOM_6_RANGE, noteLabelWithOctave, type NameStyle } from '../music/notes';
-import { isUnlocked, save, streak, type SavedState, type Settings } from '../store/progress';
+import { canInstall, install, onInstallChange } from '../pwa';
+import { save, streak, type SavedState, type Settings } from '../store/progress';
 import { Keyboard, type KeyState } from './Keyboard';
 import { useMidi } from './useMidi';
 import { useSize } from './useSize';
@@ -16,6 +17,8 @@ interface Props {
 }
 
 export function Home({ state, setState, onOpenLesson }: Props) {
+  const [installable, setInstallable] = useState(canInstall);
+  useEffect(() => onInstallChange(() => setInstallable(canInstall())), []);
   const days = streak(state.practiceDays);
   const totalStars = Object.values(state.lessons).reduce((n, l) => n + l.stars, 0);
   const maxStars = MODULES.reduce((n, m) => n + m.lessons.length * 3, 0);
@@ -39,6 +42,11 @@ export function Home({ state, setState, onOpenLesson }: Props) {
           Tecla a Tecla
         </div>
         <div className="home-stats">
+          {installable && (
+            <button className="primary small" onClick={() => void install()} title="Abre como um app próprio, com ícone no Dock, e funciona sem internet">
+              Instalar no Mac
+            </button>
+          )}
           <span>
             <b>{days}</b> {days === 1 ? 'dia seguido' : 'dias seguidos'}
           </span>
@@ -61,14 +69,9 @@ export function Home({ state, setState, onOpenLesson }: Props) {
             <ol className="lessons">
               {module.lessons.map((lesson, i) => {
                 const progress = state.lessons[lesson.id];
-                const open = isUnlocked(state, lesson.id);
                 return (
                   <li key={lesson.id}>
-                    <button
-                      className={`lesson-row ${open ? '' : 'locked'}`}
-                      disabled={!open}
-                      onClick={() => onOpenLesson(lesson.id)}
-                    >
+                    <button className="lesson-row" onClick={() => onOpenLesson(lesson.id)}>
                       <span className={`lesson-num ${progress && progress.stars > 0 ? 'done' : ''}`}>{i + 1}</span>
                       <span className="lesson-title">{lesson.title}</span>
                       {progress ? (
@@ -77,7 +80,7 @@ export function Home({ state, setState, onOpenLesson }: Props) {
                           <span className="lesson-score">{progress.bestScore}%</span>
                         </>
                       ) : (
-                        <span className="muted small">{open ? 'Nova' : 'Bloqueada'}</span>
+                        <span className="muted small">Nova</span>
                       )}
                     </button>
                   </li>

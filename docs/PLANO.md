@@ -7,14 +7,15 @@ App para aprender teclado com o Roland Fantom 6, tendo o Playground Sessions com
 | Tema | Decisão |
 | --- | --- |
 | Uso | Pessoal, um único aluno, sem login. |
-| Plataforma | App web no Chrome. O Chrome lê o teclado pela Web MIDI API; o Safari não tem suporte. |
+| Plataforma | App web no Chrome, publicado no GitHub Pages (gratuito) e instalável no Mac, funcionando sem internet. O Chrome lê o teclado pela Web MIDI API; o Safari não tem suporte. |
+| Custo | Usar o app não consome créditos do Claude nem de nenhum serviço: tudo roda no Chrome. O Claude só é usado para desenvolver novas versões. |
 | Conexão | Fantom 6 → cabo USB na porta **USB COMPUTER** → MacBook Pro M1 (macOS Tahoe 26). |
 | Zonas | Uma zona só. Se houver layer ou split, o app junta as notas repetidas de canais diferentes. |
 | Som | Você ouve o próprio Fantom. O acompanhamento (a mão que você não está tocando) é enviado ao Fantom por MIDI no canal 1; sem Fantom, toca no som do computador. |
 | Visual | Notas caindo (pronto) e partitura (Marco 2), com troca entre as duas. |
 | Avaliação | Nota certa + tempo certo. Duração e força ficam para depois. |
 | Modos | Espera, Apresentação, mãos separadas, repetir trecho, velocidade + metrônomo. Também há o modo Ouvir. |
-| Conteúdo | Trilha estruturada (módulos em ordem, lição libera a próxima com 60%) + músicas pop importadas. |
+| Conteúdo | Trilha estruturada, com todas as lições abertas para você escolher, + músicas pop importadas. |
 | Progresso | Salvo no próprio navegador: melhor nota, estrelas, dias seguidos. |
 | Nomes das notas | Dó · C (os dois), com opção de só um. |
 
@@ -51,6 +52,7 @@ Teclado do computador / mouse ───────> midi/computerKeyboard.ts �
    - Módulo 1 com 9 lições (exercícios próprios + Ode à Alegria, Brilha Brilha Estrelinha, Bate o Sino).
    - Notas caindo, teclado de 61 teclas, dedilhado, os cinco modos, acompanhamento no Fantom, estrelas e progresso.
    - Simulador pelo teclado do computador.
+   - Lições todas desbloqueadas; app instalável no Mac e funcionando sem internet.
 2. **Partitura**: pauta com clave de sol e de fá rolando junto, notas ficando verdes/vermelhas como no Playground. Troca entre partitura e notas caindo.
 3. **Importar músicas**: MusicXML e MIDI (MuseScore), escolha de quais trilhas são mão direita/esquerda, transposição para caber nas 61 teclas, biblioteca pessoal.
 4. **Módulos 2 e 3**: leitura de partitura e mãos independentes.

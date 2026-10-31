@@ -13,6 +13,14 @@ App para aprender teclado tocando no seu Roland Fantom 6. Ele reconhece cada tec
 
 Nas próximas vezes o app conecta sozinho.
 
+## Instalar no Mac
+
+Clique em **Instalar no Mac** no topo da tela inicial (ou no ícone de instalar na barra de endereço do Chrome). O app ganha ícone próprio no Dock e no Launchpad e abre em janela própria.
+
+Depois da primeira visita o app funciona **sem internet**. Quando houver versão nova, ela é baixada sozinha na próxima vez que você abrir com internet.
+
+O app não usa o Claude nem nenhum serviço pago: ele roda inteiro no Chrome do seu Mac. O progresso fica salvo no próprio Chrome.
+
 ## No Fantom
 
 - Use **uma zona só**.
@@ -31,7 +39,7 @@ Também na tela da lição: **Mãos** (as duas, só direita, só esquerda), **Ve
 
 Cores: azul = mão direita, laranja = mão esquerda, cinza = o app toca, amarelo no teclado = tecla que você deve tocar agora, verde = acertou, vermelho = errou.
 
-Uma lição libera a próxima quando você faz **60%** tocando a lição inteira com as duas mãos. 80% vale 2 estrelas, 95% vale 3.
+Todas as lições estão abertas: escolha a que quiser. A nota fica registrada quando você toca a lição inteira com as duas mãos. 60% vale 1 estrela, 80% vale 2 e 95% vale 3.
 
 Atalho: **barra de espaço** começa e pausa.
 

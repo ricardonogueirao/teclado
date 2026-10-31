@@ -1,6 +1,5 @@
 // Progress and settings, saved in this browser on this Mac (no account, no server).
 import type { NameStyle } from '../music/notes';
-import { MODULES } from '../music/lessons';
 
 export interface LessonProgress {
   bestScore: number;
@@ -22,9 +21,6 @@ export interface SavedState {
 }
 
 const KEY = 'teclado:v1';
-/** A lesson unlocks the next one when it reaches this score. */
-export const PASS_SCORE = 60;
-
 export const DEFAULT_SETTINGS: Settings = { nameStyle: 'both', showNamesOnKeys: true, metronome: true };
 
 function empty(): SavedState {
@@ -90,14 +86,4 @@ export function streak(days: string[], now = new Date()): number {
     d.setDate(d.getDate() - 1);
   }
   return count;
-}
-
-/** A lesson is open if it is the first one or the one before it was passed. */
-export function isUnlocked(state: SavedState, lessonId: string): boolean {
-  for (const module of MODULES) {
-    const i = module.lessons.findIndex((l) => l.id === lessonId);
-    if (i === 0) return true;
-    if (i > 0) return (state.lessons[module.lessons[i - 1].id]?.bestScore ?? 0) >= PASS_SCORE;
-  }
-  return false;
 }

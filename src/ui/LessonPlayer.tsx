@@ -12,7 +12,7 @@ import {
 import { midi, type KeyEvent } from '../midi/midiConnection';
 import { FANTOM_6_RANGE, noteLabel } from '../music/notes';
 import { hasHand, songLengthBeats, type Song } from '../music/types';
-import { isUnlocked, recordResult, save, type SavedState } from '../store/progress';
+import { recordResult, save, type SavedState } from '../store/progress';
 import { COLORS, FallingNotes, type Popup } from './FallingNotes';
 import { Keyboard, type KeyState } from './Keyboard';
 import { keyLayout } from './keyboardLayout';
@@ -296,7 +296,6 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
       ? engine.expectedKeys().map((m) => noteLabel(m, settings.nameStyle)).join(' + ')
       : null;
   const output = midi.activeOutput();
-  const unlockedNext = nextLessonId ? isUnlocked(state, nextLessonId) : false;
 
   return (
     <div className="player">
@@ -473,7 +472,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
               <Stars count={result.stars} size={34} />
               <div className="score">{result.score}%</div>
               {result.newBest && <div className="badge">Novo recorde!</div>}
-              <p>{resultMessage(result.score, result.counted && !!nextLessonId)}</p>
+              <p>{resultMessage(result.score)}</p>
               <dl className="result-stats">
                 <div>
                   <dt>{mode === 'wait' ? 'Acertos' : 'Perfeitas'}</dt>
@@ -506,7 +505,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
                 <button className="primary" onClick={restart}>
                   Tocar de novo
                 </button>
-                {nextLessonId && unlockedNext && (
+                {nextLessonId && (
                   <button onClick={() => onOpenLesson(nextLessonId)}>Próxima lição →</button>
                 )}
                 <button className="ghost" onClick={onExit}>
@@ -536,9 +535,9 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
   );
 }
 
-function resultMessage(score: number, unlocksNext: boolean): string {
+function resultMessage(score: number): string {
   if (score >= 95) return 'Excelente! Lição dominada.';
   if (score >= 80) return 'Muito bom! Mais uma vez e chega nas 3 estrelas.';
-  if (score >= 60) return unlocksNext ? 'Passou! A próxima lição foi liberada.' : 'Passou!';
+  if (score >= 60) return 'Passou! Repita para ganhar mais estrelas ou siga para outra lição.';
   return 'Quase lá. Tente no modo Espera ou diminua a velocidade.';
 }
