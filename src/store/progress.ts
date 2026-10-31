@@ -1,5 +1,6 @@
 // Progress and settings, saved in this browser on this Mac (no account, no server).
 import type { NameStyle } from '../music/notes';
+import type { ViewMode } from '../music/types';
 
 export interface LessonProgress {
   bestScore: number;
@@ -12,6 +13,9 @@ export interface Settings {
   nameStyle: NameStyle;
   showNamesOnKeys: boolean;
   metronome: boolean;
+  /** View for lessons that do not ask for one. */
+  view: ViewMode;
+  showNamesOnSheet: boolean;
 }
 
 export interface SavedState {
@@ -21,7 +25,13 @@ export interface SavedState {
 }
 
 const KEY = 'teclado:v1';
-export const DEFAULT_SETTINGS: Settings = { nameStyle: 'both', showNamesOnKeys: true, metronome: true };
+export const DEFAULT_SETTINGS: Settings = {
+  nameStyle: 'both',
+  showNamesOnKeys: true,
+  metronome: true,
+  view: 'both',
+  showNamesOnSheet: true,
+};
 
 function empty(): SavedState {
   return { lessons: {}, practiceDays: [], settings: { ...DEFAULT_SETTINGS } };

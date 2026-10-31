@@ -686,8 +686,8 @@ section > h2 {
   transform: translateX(-50%);
   padding: 5px 14px;
   border-radius: 99px;
-  background: rgba(253, 224, 71, 0.14);
-  border: 1px solid rgba(253, 224, 71, 0.45);
+  background: rgba(17, 20, 28, 0.88);
+  border: 1px solid rgba(253, 224, 71, 0.55);
   color: var(--yellow);
   font-weight: 600;
   font-size: 14px;
@@ -697,6 +697,7 @@ section > h2 {
 .overlay {
   position: absolute;
   inset: 0;
+  z-index: 5;
   display: grid;
   place-items: center;
   padding: 16px;
@@ -802,4 +803,99 @@ section > h2 {
   .player-controls .actions {
     margin-left: 0;
   }
+}
+
+/* ---------- Sheet music ---------- */
+
+.stage-sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #f7f5ef;
+  border-bottom: 1px solid #d8d3c4;
+}
+
+.stage-falling {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.sheet {
+  position: relative;
+  overflow: hidden;
+}
+
+.sheet-strip {
+  position: absolute;
+  left: 0;
+  will-change: transform;
+}
+
+.sheet-strip svg {
+  display: block;
+}
+
+.sheet-cursor {
+  position: absolute;
+  left: 0;
+  width: 4px;
+  border-radius: 2px;
+  background: rgba(79, 156, 249, 0.55);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.sheet-cursor.is-waiting {
+  background: rgba(234, 179, 8, 0.7);
+}
+
+/* Note colours. CSS wins over the colours VexFlow writes as SVG attributes. */
+.sheet .vf-stavenote.now path,
+.sheet .vf-stavenote.now text {
+  fill: #2563eb;
+}
+.sheet .vf-stavenote.now path[stroke]:not([stroke='none']) {
+  stroke: #2563eb;
+}
+
+.sheet .vf-stavenote.hit path,
+.sheet .vf-stavenote.hit text {
+  fill: #16a34a;
+}
+.sheet .vf-stavenote.hit path[stroke]:not([stroke='none']) {
+  stroke: #16a34a;
+}
+
+.sheet .vf-stavenote.miss path,
+.sheet .vf-stavenote.miss text {
+  fill: #dc2626;
+}
+.sheet .vf-stavenote.miss path[stroke]:not([stroke='none']) {
+  stroke: #dc2626;
+}
+
+.sheet .vf-stavenote.auto {
+  opacity: 0.4;
+}
+.sheet .vf-stavenote.auto.playing {
+  opacity: 0.75;
+}
+
+.sheet .vf-stavenote.out {
+  opacity: 0.3;
+}
+
+.sheet-names {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 3;
+  display: flex;
+  font-size: 13px;
+  color: #3b4252;
+  background: rgba(247, 245, 239, 0.9);
+  padding: 3px 8px;
+  border-radius: 7px;
 }

@@ -11,11 +11,12 @@ import {
 } from '../engine/practice';
 import { midi, type KeyEvent } from '../midi/midiConnection';
 import { FANTOM_6_RANGE, noteLabel } from '../music/notes';
-import { hasHand, songLengthBeats, type Song } from '../music/types';
-import { recordResult, save, type SavedState } from '../store/progress';
+import { hasHand, songLengthBeats, type Song, type ViewMode } from '../music/types';
+import { recordResult, save, type SavedState, type Settings } from '../store/progress';
 import { COLORS, FallingNotes, type Popup } from './FallingNotes';
 import { Keyboard, type KeyState } from './Keyboard';
 import { keyLayout } from './keyboardLayout';
+import { SheetMusic } from './SheetMusic';
 import { Segmented, Stars } from './widgets';
 import { useSize } from './useSize';
 
@@ -51,6 +52,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
   const [hands, setHands] = useState<HandsChoice>('both');
   const [tempo, setTempo] = useState(1);
   const [metronome, setMetronome] = useState(settings.metronome);
+  const [view, setView] = useState<ViewMode>(song.view ?? settings.view);
   const [loopOn, setLoopOn] = useState(false);
   const [loopFrom, setLoopFrom] = useState(1);
   const [loopTo, setLoopTo] = useState(Math.min(2, bars));
@@ -68,6 +70,12 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
   const lastVersion = useRef(-1);
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  const updateSettings = (patch: Partial<Settings>) => {
+    const next = { ...stateRef.current, settings: { ...stateRef.current.settings, ...patch } };
+    save(next);
+    setState(next);
+  };
 
   const [stageRef, stage] = useSize<HTMLDivElement>();
   const rects = useMemo(() => keyLayout(RANGE, stage.width), [stage.width]);
@@ -296,6 +304,9 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
       ? engine.expectedKeys().map((m) => noteLabel(m, settings.nameStyle)).join(' + ')
       : null;
   const output = midi.activeOutput();
+  // In "both", the sheet takes the top part of the stage and the falling notes the rest.
+  const sheetHeight =
+    view === 'sheet' ? stage.height : view === 'both' ? Math.round(Math.min(stage.height * 0.55, 330)) : 0;
 
   return (
     <div className="player">
@@ -309,6 +320,19 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
             Compasso {currentBar} de {bars} · {Math.round(song.bpm * tempo)} bpm
           </span>
         </div>
+        <Segmented<ViewMode>
+          label="Visual"
+          value={view}
+          onChange={(v) => {
+            setView(v);
+            updateSettings({ view: v });
+          }}
+          options={[
+            { value: 'falling', label: 'Notas caindo' },
+            { value: 'sheet', label: 'Partitura' },
+            { value: 'both', label: 'Ambos' },
+          ]}
+        />
         <div className="hud">
           {mode !== 'listen' && stats && (
             <>
@@ -419,14 +443,38 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
       )}
 
       <div className="stage" ref={stageRef}>
-        <FallingNotes
-          engineRef={engineRef}
-          popupsRef={popupsRef}
-          rects={rects}
-          width={stage.width}
-          height={stage.height}
-          nameStyle={settings.nameStyle}
-        />
+        {view !== 'falling' && (
+          <div className="stage-sheet" style={{ height: sheetHeight }}>
+            <SheetMusic
+              song={song}
+              engineRef={engineRef}
+              width={stage.width}
+              height={sheetHeight}
+              nameStyle={settings.nameStyle}
+              showNames={settings.showNamesOnSheet}
+            />
+            <label className="sheet-names check">
+              <input
+                type="checkbox"
+                checked={settings.showNamesOnSheet}
+                onChange={(e) => updateSettings({ showNamesOnSheet: e.target.checked })}
+              />
+              Nomes nas notas
+            </label>
+          </div>
+        )}
+        {view !== 'sheet' && (
+          <div className="stage-falling" style={{ top: sheetHeight, height: stage.height - sheetHeight }}>
+            <FallingNotes
+              engineRef={engineRef}
+              popupsRef={popupsRef}
+              rects={rects}
+              width={stage.width}
+              height={stage.height - sheetHeight}
+              nameStyle={settings.nameStyle}
+            />
+          </div>
+        )}
         {waitingFor && <div className="waiting">Toque: {waitingFor}</div>}
 
         {phase === 'ready' && (
@@ -434,27 +482,50 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
             <div className="card intro">
               <h2>{song.title}</h2>
               <p>{song.goal}</p>
+              {view !== 'sheet' && (
+                <ul className="legend">
+                  {hasHand(song, 'R') && (
+                    <li>
+                      <i style={{ background: COLORS.right }} /> mão direita
+                    </li>
+                  )}
+                  {hasHand(song, 'L') && (
+                    <li>
+                      <i style={{ background: COLORS.left }} /> mão esquerda
+                    </li>
+                  )}
+                  <li>
+                    <i style={{ background: COLORS.auto, border: '1px solid #aab' }} /> o app toca
+                  </li>
+                </ul>
+              )}
               <ul className="legend">
-                {hasHand(song, 'R') && (
-                  <li>
-                    <i style={{ background: COLORS.right }} /> mão direita
-                  </li>
+                {view !== 'falling' && (
+                  <>
+                    <li>
+                      <i style={{ background: '#2563eb' }} /> próxima nota
+                    </li>
+                    <li>
+                      <i style={{ background: '#16a34a' }} /> acertou
+                    </li>
+                    <li>
+                      <i style={{ background: '#dc2626' }} /> perdeu
+                    </li>
+                  </>
                 )}
-                {hasHand(song, 'L') && (
-                  <li>
-                    <i style={{ background: COLORS.left }} /> mão esquerda
-                  </li>
-                )}
-                <li>
-                  <i style={{ background: COLORS.auto, border: '1px solid #aab' }} /> o app toca
-                </li>
                 <li>
                   <i style={{ background: COLORS.wait }} /> tecla que você deve tocar
                 </li>
               </ul>
               <p className="muted small">
-                {mode === 'wait' && 'Modo Espera: as notas param na linha até você tocar a tecla certa.'}
-                {mode === 'perform' && 'Modo Apresentação: a música não para. Toque cada nota quando ela encostar na linha.'}
+                {mode === 'wait' &&
+                  (view === 'sheet'
+                    ? 'Modo Espera: o cursor para em cada nota até você tocar a tecla certa.'
+                    : 'Modo Espera: as notas param na linha até você tocar a tecla certa.')}
+                {mode === 'perform' &&
+                  (view === 'sheet'
+                    ? 'Modo Apresentação: o cursor não para. Toque cada nota quando ele passar por ela.'
+                    : 'Modo Apresentação: a música não para. Toque cada nota quando ela encostar na linha.')}
                 {mode === 'listen' && 'Modo Ouvir: escute a lição antes de tocar.'}{' '}
                 Acompanhamento: {output ? output.name : 'som do computador'}.
               </p>

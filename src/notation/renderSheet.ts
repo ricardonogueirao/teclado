@@ -1,0 +1,222 @@
+// Draws a lesson as sheet music (VexFlow) in one long horizontal line,
+// and records where each beat sits so a cursor can follow the music.
+import {
+  Accidental,
+  Annotation,
+  Barline,
+  Beam,
+  Dot,
+  Formatter,
+  FretHandFinger,
+  Modifier,
+  Renderer,
+  Stave,
+  StaveConnector,
+  StaveNote,
+  Voice,
+} from 'vexflow/bravura';
+import { letter, solfege, type NameStyle } from '../music/notes';
+import type { Hand, Song, SongNote } from '../music/types';
+import { buildMeasures, noteValue, staffHands, vexKey, type SheetEvent } from './sheetLayout';
+
+export interface SheetGroup {
+  el: Element;
+  notes: SongNote[];
+  cls: string;
+}
+
+export interface SheetRender {
+  width: number;
+  height: number;
+  /** Beat -> x (drawing units), sorted by beat. */
+  marks: { beat: number; x: number }[];
+  groups: SheetGroup[];
+  /** Vertical span of the staves, for the cursor. */
+  top: number;
+  bottom: number;
+}
+
+const LEFT = 12;
+const RIGHT = 24;
+const STAVE_Y: Record<number, number> = { 0: 0, 1: 125 };
+// Stave(y): the top line is 40 below y and the bottom line 80 below.
+const TOP_LINE = 40;
+const BOTTOM_LINE = 80;
+const BOTTOM_ROOM = 62;
+const BEAT_PX = 54;
+const EVENT_PX = 36;
+/** The cursor reaches a bar line this many beats before the bar's first note. */
+const BARLINE_LEAD = 0.12;
+
+interface Built {
+  stave: Stave;
+  hand: Hand;
+  notes: StaveNote[];
+  events: SheetEvent[];
+}
+
+function makeNote(ev: SheetEvent, hand: Hand, beatsPerBar: number, opts: Options): StaveNote {
+  const clef = hand === 'R' ? 'treble' : 'bass';
+  if (ev.notes.length === 0) {
+    const wholeBar = Math.abs(ev.dur - beatsPerBar) < 1e-6;
+    const value = wholeBar ? { code: 'w', dots: 0 } : (noteValue(ev.dur) ?? { code: 'q', dots: 0 });
+    const rest = new StaveNote({
+      keys: [hand === 'R' ? 'b/4' : 'd/3'],
+      duration: `${value.code}r`,
+      clef,
+      align_center: wholeBar,
+    });
+    if (value.dots) Dot.buildAndAttach([rest], { all: true });
+    return rest;
+  }
+
+  const value = noteValue(ev.dur) ?? { code: 'q', dots: 0 };
+  const keys = ev.notes.map((n) => vexKey(n.midi));
+  const note = new StaveNote({ keys, duration: value.code, clef, auto_stem: true });
+  keys.forEach((k, i) => {
+    if (k.includes('#')) note.addModifier(new Accidental('#'), i);
+  });
+  if (value.dots) Dot.buildAndAttach([note], { all: true });
+
+  if (opts.showNames) {
+    const lines: string[] =
+      opts.nameStyle === 'letters'
+        ? [ev.notes.map((n) => letter(n.midi)).join(' ')]
+        : opts.nameStyle === 'solfege'
+          ? [ev.notes.map((n) => solfege(n.midi)).join(' ')]
+          : [ev.notes.map((n) => solfege(n.midi)).join(' '), ev.notes.map((n) => letter(n.midi)).join(' ')];
+    for (const text of lines) {
+      note.addModifier(
+        new Annotation(text)
+          .setFont('Arial', 11, 'normal')
+          .setVerticalJustification(Annotation.VerticalJustify.BOTTOM),
+        0,
+      );
+    }
+  }
+  // Finger numbers above the right hand only, so they never collide with the names between the staves.
+  const finger = ev.notes[0].finger;
+  if (hand === 'R' && finger) {
+    note.addModifier(new FretHandFinger(String(finger)).setPosition(Modifier.Position.ABOVE), 0);
+  }
+  return note;
+}
+
+interface Options {
+  nameStyle: NameStyle;
+  showNames: boolean;
+}
+
+export function renderSheet(host: HTMLElement, song: Song, opts: Options): SheetRender {
+  host.innerHTML = '';
+  const measures = buildMeasures(song);
+  const hands = staffHands(song);
+  const bpb = song.beatsPerBar;
+  const last = measures.length - 1;
+
+  // Pass 1: build staves and notes, and work out each bar's width.
+  let x = LEFT;
+  const bars = measures.map((m, i) => {
+    const built: Built[] = hands.map((hand, row) => {
+      const stave = new Stave(x, STAVE_Y[row], 100);
+      if (i === 0) stave.addClef(hand === 'R' ? 'treble' : 'bass').addTimeSignature(`${bpb}/4`);
+      if (i === last) stave.setEndBarType(Barline.type.END);
+      const events = m.staves[hand] ?? [];
+      return { stave, hand, events, notes: events.map((ev) => makeNote(ev, hand, bpb, opts)) };
+    });
+    const staves = built.map((b) => b.stave);
+    if (i === 0 && staves.length > 1) Stave.formatBegModifiers(staves);
+    const lead = Math.max(...staves.map((s) => s.getNoteStartX() - s.getX()));
+    const events = Math.max(...built.map((b) => b.events.length));
+    const width = lead + Math.max(m.beats * BEAT_PX, events * EVENT_PX) + 18;
+    staves.forEach((s) => s.setX(x).setWidth(width));
+    x += width;
+    return { m, built, width };
+  });
+
+  const width = x + RIGHT;
+  const bottomStave = STAVE_Y[hands.length - 1];
+  const height = bottomStave + BOTTOM_LINE + BOTTOM_ROOM;
+  const renderer = new Renderer(host as HTMLDivElement, Renderer.Backends.SVG);
+  renderer.resize(width, height);
+  const ctx = renderer.getContext();
+
+  // Pass 2: draw, then read back where everything landed.
+  const marks: { beat: number; x: number }[] = [];
+  const pending: { note: StaveNote; notes: SongNote[] }[] = [];
+
+  bars.forEach(({ m, built }, i) => {
+    built.forEach((b) => b.stave.setContext(ctx).draw());
+    if (built.length === 2) {
+      const [top, bottom] = [built[0].stave, built[1].stave];
+      if (i === 0) {
+        new StaveConnector(top, bottom).setType('brace').setContext(ctx).draw();
+        new StaveConnector(top, bottom).setType('singleLeft').setContext(ctx).draw();
+      }
+      new StaveConnector(top, bottom).setType(i === last ? 'boldDoubleRight' : 'singleRight').setContext(ctx).draw();
+    }
+
+    const beams: Beam[] = [];
+    const voices = built.map((b) => {
+      b.notes.forEach((n) => n.setStave(b.stave));
+      beams.push(...Beam.generateBeams(b.notes));
+      return new Voice({ num_beats: bpb, beat_value: 4 }).setMode(Voice.Mode.SOFT).addTickables(b.notes);
+    });
+    const formatter = new Formatter();
+    voices.forEach((v) => formatter.joinVoices([v]));
+    formatter.formatToStave(voices, built[0].stave);
+    voices.forEach((v, k) => v.draw(ctx, built[k].stave));
+    beams.forEach((beam) => beam.setContext(ctx).draw());
+
+    if (i > 0) marks.push({ beat: m.start - BARLINE_LEAD, x: built[0].stave.getX() });
+    built.forEach((b) =>
+      b.notes.forEach((n, k) => {
+        const ev = b.events[k];
+        const center = n.getAbsoluteX() + n.getGlyphWidth() / 2;
+        marks.push({ beat: ev.start, x: center });
+        if (ev.notes.length) pending.push({ note: n, notes: ev.notes });
+      }),
+    );
+    if (i === last) {
+      const s = built[0].stave;
+      marks.push({ beat: m.start + m.beats, x: s.getX() + s.getWidth() });
+    }
+  });
+
+  // One mark per beat; notes in both staves at the same beat share an x.
+  marks.sort((a, b) => a.beat - b.beat || a.x - b.x);
+  const unique = marks.filter((mk, i) => i === 0 || Math.abs(mk.beat - marks[i - 1].beat) > 1e-6);
+
+  const groups: SheetGroup[] = [];
+  for (const p of pending) {
+    const el = p.note.getSVGElement();
+    if (el) groups.push({ el, notes: p.notes, cls: '' });
+  }
+
+  return {
+    width,
+    height,
+    marks: unique,
+    groups,
+    top: TOP_LINE - 18,
+    bottom: bottomStave + BOTTOM_LINE + 14,
+  };
+}
+
+/** x for a beat, between the two nearest marks. */
+export function xAtBeat(marks: { beat: number; x: number }[], beat: number): number {
+  if (marks.length === 0) return 0;
+  if (beat <= marks[0].beat) return marks[0].x;
+  const lastMark = marks[marks.length - 1];
+  if (beat >= lastMark.beat) return lastMark.x;
+  let lo = 0;
+  let hi = marks.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (marks[mid].beat <= beat) lo = mid;
+    else hi = mid;
+  }
+  const a = marks[lo];
+  const b = marks[hi];
+  return a.x + ((beat - a.beat) / (b.beat - a.beat)) * (b.x - a.x);
+}

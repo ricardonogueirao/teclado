@@ -1,5 +1,8 @@
 export type Hand = 'R' | 'L';
 
+/** How the lesson is shown: falling notes, sheet music, or both. */
+export type ViewMode = 'falling' | 'sheet' | 'both';
+
 /** One note of a lesson. Times are in beats (quarter notes), counted from 0. */
 export interface SongNote {
   midi: number;
@@ -17,6 +20,8 @@ export interface Song {
   bpm: number;
   beatsPerBar: number;
   notes: SongNote[];
+  /** View the lesson opens in, when it is meant for reading practice. */
+  view?: ViewMode;
 }
 
 export interface Module {

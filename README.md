@@ -37,7 +37,9 @@ O app não usa o Claude nem nenhum serviço pago: ele roda inteiro no Chrome do 
 
 Também na tela da lição: **Mãos** (as duas, só direita, só esquerda), **Velocidade**, **Metrônomo** e **Repetir compassos**.
 
-Cores: azul = mão direita, laranja = mão esquerda, cinza = o app toca, amarelo no teclado = tecla que você deve tocar agora, verde = acertou, vermelho = errou.
+No topo da lição, **Visual** escolhe entre **Notas caindo**, **Partitura** ou **Ambos**. Na partitura, um cursor mostra onde a música está e fica amarelo quando espera você tocar. **Nomes nas notas** liga ou desliga os nomes embaixo de cada nota: desligue quando quiser treinar a leitura. As lições do Módulo 2 abrem direto na partitura.
+
+Cores nas notas caindo: azul = mão direita, laranja = mão esquerda, cinza = o app toca. Na partitura: azul = próxima nota, verde = acertou, vermelho = perdeu. No teclado: amarelo = tecla que você deve tocar agora, verde = acertou, vermelho = errou.
 
 Todas as lições estão abertas: escolha a que quiser. A nota fica registrada quando você toca a lição inteira com as duas mãos. 60% vale 1 estrela, 80% vale 2 e 95% vale 3.
 

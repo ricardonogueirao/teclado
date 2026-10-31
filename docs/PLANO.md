@@ -12,7 +12,7 @@ App para aprender teclado com o Roland Fantom 6, tendo o Playground Sessions com
 | Conexão | Fantom 6 → cabo USB na porta **USB COMPUTER** → MacBook Pro M1 (macOS Tahoe 26). |
 | Zonas | Uma zona só. Se houver layer ou split, o app junta as notas repetidas de canais diferentes. |
 | Som | Você ouve o próprio Fantom. O acompanhamento (a mão que você não está tocando) é enviado ao Fantom por MIDI no canal 1; sem Fantom, toca no som do computador. |
-| Visual | Notas caindo (pronto) e partitura (Marco 2), com troca entre as duas. |
+| Visual | Notas caindo, partitura ou ambos, escolhido na tela da lição. |
 | Avaliação | Nota certa + tempo certo. Duração e força ficam para depois. |
 | Modos | Espera, Apresentação, mãos separadas, repetir trecho, velocidade + metrônomo. Também há o modo Ouvir. |
 | Conteúdo | Trilha estruturada, com todas as lições abertas para você escolher, + músicas pop importadas. |
@@ -34,7 +34,7 @@ Teclado do computador / mouse ───────> midi/computerKeyboard.ts �
                      music/lessons.ts ──> engine/practice.ts  (motor puro, testado)
                      (trilha, notação)        │  avança o tempo, compara, pontua
                                               v
-          ui/LessonPlayer.tsx ── ui/FallingNotes.tsx (canvas) + ui/Keyboard.tsx
+          ui/LessonPlayer.tsx ── ui/FallingNotes.tsx (canvas) + ui/SheetMusic.tsx (VexFlow) + ui/Keyboard.tsx
                 │
                 ├─> audio/sound.ts      (metrônomo, som do simulador)
                 ├─> MIDI de volta ao Fantom (acompanhamento)
@@ -53,12 +53,16 @@ Teclado do computador / mouse ───────> midi/computerKeyboard.ts �
    - Notas caindo, teclado de 61 teclas, dedilhado, os cinco modos, acompanhamento no Fantom, estrelas e progresso.
    - Simulador pelo teclado do computador.
    - Lições todas desbloqueadas; app instalável no Mac e funcionando sem internet.
-2. **Partitura**: pauta com clave de sol e de fá rolando junto, notas ficando verdes/vermelhas como no Playground. Troca entre partitura e notas caindo.
+2. **Partitura e Módulo 2** *(entregue)*
+   - Partitura desenhada com a VexFlow 4 (fontes embutidas, funciona sem internet): clave de sol e de fá, chave unindo as pautas, colcheias com barra, pausas, dedilhado e nomes das notas.
+   - Partitura em uma linha que rola com a música; cursor que para no modo Espera; notas azuis (próxima), verdes (acertou) e vermelhas (perdeu).
+   - Visual escolhido na lição (Notas caindo, Partitura, Ambos) e lembrado.
+   - Módulo 2, *Lendo partitura*: 10 lições (Dó, Ré, Mi e Fá, Sol na clave de sol; posição de Sol; clave de fá; Dó central nas duas claves; segundas e terças; quartas e quintas; colcheias; Frei Martinho; Brilha, Brilha nas duas claves).
 3. **Importar músicas**: MusicXML e MIDI (MuseScore), escolha de quais trilhas são mão direita/esquerda, transposição para caber nas 61 teclas, biblioteca pessoal.
-4. **Módulos 2 e 3**: leitura de partitura e mãos independentes.
+4. **Módulo 3**: mãos independentes.
 5. **Módulos 4 a 6**: acordes, escalas e intermediário. Avaliação de duração e força; relatório das notas que você mais erra.
 
 ## Testes
 
-- `npm test`: motor de prática, leitura de MIDI, notação e conteúdo das lições (inclui checar que tudo cabe nas 61 teclas).
+- `npm test`: motor de prática, leitura de MIDI, notação, montagem da partitura (compassos, pausas, acordes) e conteúdo das lições: tudo cabe nas 61 teclas, nenhuma nota atravessa a barra de compasso e toda duração pode ser escrita na partitura.
 - Teste de ponta a ponta no Chrome com um Fantom simulado: conexão, nota reconhecida, lição completa, acompanhamento enviado ao Fantom.
