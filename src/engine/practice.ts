@@ -116,7 +116,7 @@ export class PracticeEngine {
       .filter((n) => n.start >= this.startBeat - EPS && n.start < this.endBeat - EPS)
       .sort((a, b) => a.start - b.start || a.midi - b.midi)
       .map((note) => {
-        const played = mode !== 'listen' && (hands === 'both' || note.hand === hands);
+        const played = mode !== 'listen' && note.hand !== 'A' && (hands === 'both' || note.hand === hands);
         return { note, played, status: played ? 'pending' : 'auto', sounding: false, soundDone: false };
       });
     this.pos = this.startBeat - this.opts.countInBars * this.song.beatsPerBar;

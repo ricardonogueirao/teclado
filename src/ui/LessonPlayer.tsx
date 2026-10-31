@@ -45,6 +45,7 @@ const ACC_VELOCITY = 72;
 
 export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOpenLesson }: Props) {
   const twoHands = hasHand(song, 'R') && hasHand(song, 'L');
+  const flats = (song.keyFifths ?? 0) < 0;
   const bars = songLengthBeats(song) / song.beatsPerBar;
   const settings = state.settings;
 
@@ -301,7 +302,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
   const currentBar = engine ? Math.max(1, Math.min(bars, Math.floor(engine.pos / song.beatsPerBar) + 1)) : 1;
   const waitingFor =
     engine && engine.waiting && mode === 'wait'
-      ? engine.expectedKeys().map((m) => noteLabel(m, settings.nameStyle)).join(' + ')
+      ? engine.expectedKeys().map((m) => noteLabel(m, settings.nameStyle, flats)).join(' + ')
       : null;
   const output = midi.activeOutput();
   // In "both", the sheet takes the top part of the stage and the falling notes the rest.
@@ -472,6 +473,7 @@ export function LessonPlayer({ song, nextLessonId, state, setState, onExit, onOp
               width={stage.width}
               height={stage.height - sheetHeight}
               nameStyle={settings.nameStyle}
+              flats={flats}
             />
           </div>
         )}

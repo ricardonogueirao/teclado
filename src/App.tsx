@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { installComputerKeyboard } from './midi/computerKeyboard';
 import { midi } from './midi/midiConnection';
 import { findLesson } from './music/lessons';
+import { loadLibrary, saveLibrary, type LibrarySong } from './store/library';
 import { load, type SavedState } from './store/progress';
 import { Home } from './ui/Home';
 import { LessonPlayer } from './ui/LessonPlayer';
@@ -15,6 +16,13 @@ function lessonFromHash(): string | null {
 export function App() {
   const [state, setState] = useState<SavedState>(load);
   const [lessonId, setLessonId] = useState<string | null>(lessonFromHash);
+  const [library, setLibrary] = useState<LibrarySong[]>(loadLibrary);
+
+  const changeLibrary = (list: LibrarySong[]) => {
+    if (!saveLibrary(list)) return false;
+    setLibrary(list);
+    return true;
+  };
 
   useEffect(() => installComputerKeyboard(), []);
 
@@ -42,6 +50,21 @@ export function App() {
     window.location.hash = '';
   };
 
+  const imported = lessonId ? library.find((s) => s.id === lessonId) : undefined;
+  if (imported) {
+    return (
+      <LessonPlayer
+        key={imported.id}
+        song={imported}
+        nextLessonId={null}
+        state={state}
+        setState={setState}
+        onExit={home}
+        onOpenLesson={open}
+      />
+    );
+  }
+
   const found = lessonId ? findLesson(lessonId) : null;
   if (found) {
     const next = found.module.lessons[found.index + 1]?.id ?? null;
@@ -57,5 +80,7 @@ export function App() {
       />
     );
   }
-  return <Home state={state} setState={setState} onOpenLesson={open} />;
+  return (
+    <Home state={state} setState={setState} onOpenLesson={open} library={library} onLibraryChange={changeLibrary} />
+  );
 }

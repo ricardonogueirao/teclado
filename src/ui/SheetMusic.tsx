@@ -57,6 +57,12 @@ export function SheetMusic({ song, engineRef, width, height, nameStyle, showName
   // Follow the music every frame.
   useEffect(() => {
     let frame = 0;
+    // Recolouring hundreds of notes is only needed when the engine or the expected notes change.
+    let lastEngine: PracticeEngine | null = null;
+    let lastVersion = -1;
+    let lastExpected: SongNote[] = [];
+    let lastRender: SheetRender | null = null;
+    let states = new Map<SongNote, NoteState>();
     const step = () => {
       frame = requestAnimationFrame(step);
       const r = renderRef.current;
@@ -73,8 +79,16 @@ export function SheetMusic({ song, engineRef, width, height, nameStyle, showName
       cursor.classList.toggle('is-waiting', !!engine?.waiting);
 
       if (!engine) return;
-      const states = new Map(engine.notes.map((s) => [s.note, s]));
-      const expected = new Set(engine.expectedNotes());
+      const expectedList = engine.expectedNotes();
+      const sameExpected =
+        expectedList.length === lastExpected.length && expectedList.every((n, i) => n === lastExpected[i]);
+      if (engine === lastEngine && engine.version === lastVersion && sameExpected && r === lastRender) return;
+      if (engine !== lastEngine || engine.version !== lastVersion) states = new Map(engine.notes.map((s) => [s.note, s]));
+      lastEngine = engine;
+      lastVersion = engine.version;
+      lastExpected = expectedList;
+      lastRender = r;
+      const expected = new Set(expectedList);
       for (const g of r.groups) {
         const cls = classFor(g.notes, states, expected);
         if (cls !== g.cls) {

@@ -17,6 +17,8 @@ interface Props {
   width: number;
   height: number;
   nameStyle: NameStyle;
+  /** Name black keys with flats (songs in flat keys). */
+  flats?: boolean;
 }
 
 /** How far ahead the player sees, in real time. Notes fall at the same speed at any tempo. */
@@ -33,8 +35,8 @@ export const COLORS = {
   wait: '#fde047',
 };
 
-function label(midi: number, style: NameStyle): string {
-  return style === 'letters' ? letter(midi) : solfege(midi);
+function label(midi: number, style: NameStyle, flats: boolean): string {
+  return style === 'letters' ? letter(midi, flats) : solfege(midi, flats);
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -48,7 +50,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-export function FallingNotes({ engineRef, popupsRef, rects, width, height, nameStyle }: Props) {
+export function FallingNotes({ engineRef, popupsRef, rects, width, height, nameStyle, flats = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -133,7 +135,7 @@ export function FallingNotes({ engineRef, popupsRef, rects, width, height, nameS
         if (h >= 18 && w >= 14 && s.status !== 'auto') {
           ctx.fillStyle = 'rgba(10,12,20,0.85)';
           ctx.font = `600 ${Math.min(13, w * 0.42)}px system-ui, sans-serif`;
-          ctx.fillText(label(s.note.midi, nameStyle), x + w / 2, top + h - 5);
+          ctx.fillText(label(s.note.midi, nameStyle, flats), x + w / 2, top + h - 5);
           if (s.note.finger && h >= 38) {
             ctx.font = '600 11px system-ui, sans-serif';
             ctx.fillText(String(s.note.finger), x + w / 2, top + 15);
@@ -174,7 +176,7 @@ export function FallingNotes({ engineRef, popupsRef, rects, width, height, nameS
     };
     draw();
     return () => cancelAnimationFrame(frame);
-  }, [engineRef, popupsRef, rects, width, height, nameStyle]);
+  }, [engineRef, popupsRef, rects, width, height, nameStyle, flats]);
 
   return <canvas ref={canvasRef} className="falling" style={{ width, height }} />;
 }

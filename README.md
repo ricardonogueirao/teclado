@@ -45,6 +45,19 @@ Todas as lições estão abertas: escolha a que quiser. A nota fica registrada q
 
 Atalho: **barra de espaço** começa e pausa.
 
+## Suas músicas (MuseScore)
+
+Na tela inicial, **Minhas músicas → Importar música** (ou arraste o arquivo para lá).
+
+1. No **MuseScore.com**, procure a música com "piano" e, se quiser, o nível ("easy piano"). Abra a partitura, clique em **Baixar** e escolha **MusicXML**. Baixar costuma exigir a assinatura MuseScore Pro.
+2. Importe o arquivo. O app mostra as partes da partitura e sugere quem toca cada uma: **Mão direita**, **Mão esquerda**, **O app toca** (acompanhamento, por exemplo a voz) ou **Não usar**.
+3. Se alguma nota não couber nas 61 teclas, o app a traz para dentro mudando de oitava. Você também pode mudar a oitava de tudo.
+4. **Salvar e abrir**. A música fica guardada em *Minhas músicas*, com estrelas e recorde como as lições.
+
+Formatos: MusicXML (`.mxl`, `.musicxml`, `.xml`) é o melhor, porque a partitura sai como a original, com dedilhado quando houver. MIDI (`.mid`) também funciona, mas só traz as notas, então a partitura é montada a partir delas e pode sair simplificada.
+
+As músicas ficam guardadas só no Chrome deste Mac. Se você apagar os dados do site, elas somem: guarde os arquivos baixados.
+
 ## Sem o teclado
 
 Dá para tocar pelo teclado do computador: `A S D F G H J K` são as teclas brancas, `W E T Y U` as pretas, `Z` e `X` mudam a oitava. Também dá para clicar nas teclas da tela.

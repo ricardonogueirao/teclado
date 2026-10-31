@@ -4,6 +4,9 @@ export type NameStyle = 'both' | 'solfege' | 'letters';
 
 const SOLFEGE = ['Dó', 'Dó♯', 'Ré', 'Ré♯', 'Mi', 'Fá', 'Fá♯', 'Sol', 'Sol♯', 'Lá', 'Lá♯', 'Si'];
 const LETTERS = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+// In flat keys (Fá maior, Si♭ maior...) black keys are named with flats.
+const SOLFEGE_FLAT = ['Dó', 'Ré♭', 'Ré', 'Mi♭', 'Mi', 'Fá', 'Sol♭', 'Sol', 'Lá♭', 'Lá', 'Si♭', 'Si'];
+const LETTERS_FLAT = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
 const BLACK = new Set([1, 3, 6, 8, 10]);
 
 export const MIDDLE_C = 60;
@@ -20,19 +23,19 @@ export function octave(midi: number): number {
   return Math.floor(midi / 12) - 1;
 }
 
-export function solfege(midi: number): string {
-  return SOLFEGE[pitchClass(midi)];
+export function solfege(midi: number, flats = false): string {
+  return (flats ? SOLFEGE_FLAT : SOLFEGE)[pitchClass(midi)];
 }
 
-export function letter(midi: number): string {
-  return LETTERS[pitchClass(midi)];
+export function letter(midi: number, flats = false): string {
+  return (flats ? LETTERS_FLAT : LETTERS)[pitchClass(midi)];
 }
 
 /** Short label for a note, e.g. "Dó · C" or "Ré". */
-export function noteLabel(midi: number, style: NameStyle): string {
-  if (style === 'solfege') return solfege(midi);
-  if (style === 'letters') return letter(midi);
-  return `${solfege(midi)} · ${letter(midi)}`;
+export function noteLabel(midi: number, style: NameStyle, flats = false): string {
+  if (style === 'solfege') return solfege(midi, flats);
+  if (style === 'letters') return letter(midi, flats);
+  return `${solfege(midi, flats)} · ${letter(midi, flats)}`;
 }
 
 /** Label with octave, for diagnostics: "Dó4 (C4)". */

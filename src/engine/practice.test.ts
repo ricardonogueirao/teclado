@@ -169,6 +169,16 @@ describe('loop', () => {
   });
 });
 
+describe('accompaniment from imported songs', () => {
+  it('is always played by the app, even with both hands', () => {
+    const withBand: Song = { ...song, notes: [...song.notes, { midi: 40, start: 0, dur: 2, hand: 'A' }] };
+    const e = new PracticeEngine(withBand, { ...base, hands: 'both' });
+    const ev = e.tick(0);
+    expect(ev).toContainEqual({ type: 'accOn', midi: 40, hand: 'A' });
+    expect(e.stats.total).toBe(5);
+  });
+});
+
 describe('listen mode', () => {
   it('plays everything and never judges', () => {
     const e = new PracticeEngine(song, { ...base, mode: 'listen' });

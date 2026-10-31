@@ -58,11 +58,19 @@ Teclado do computador / mouse ───────> midi/computerKeyboard.ts �
    - Partitura em uma linha que rola com a música; cursor que para no modo Espera; notas azuis (próxima), verdes (acertou) e vermelhas (perdeu).
    - Visual escolhido na lição (Notas caindo, Partitura, Ambos) e lembrado.
    - Módulo 2, *Lendo partitura*: 10 lições (Dó, Ré, Mi e Fá, Sol na clave de sol; posição de Sol; clave de fá; Dó central nas duas claves; segundas e terças; quartas e quintas; colcheias; Frei Martinho; Brilha, Brilha nas duas claves).
-3. **Importar músicas**: MusicXML e MIDI (MuseScore), escolha de quais trilhas são mão direita/esquerda, transposição para caber nas 61 teclas, biblioteca pessoal.
+3. **Importar músicas** *(entregue)*
+   - Leitura de MusicXML (`.musicxml`, `.xml` e `.mxl` compactado, aberto com a descompressão do próprio Chrome) e MIDI (`.mid`, tipos 0 e 1).
+   - MusicXML: uma trilha por pauta, ligaduras unidas, notas de enfeite ignoradas, dedilhado lido, anacruse alinhada, ritornelos e casas 1/2 tocados na ordem.
+   - Escolha de quem toca cada parte (mão direita, esquerda, acompanhamento do app, não usar), com sugestão automática; bateria nunca vira mão.
+   - Ajuste às 61 teclas: muda a oitava de tudo só quando vale a pena; notas avulsas mudam de oitava sozinhas.
+   - Partitura para qualquer música: armadura de clave, acidentes automáticos, nomes com bemol em tons bemóis, ligaduras na barra de compasso, notas sobrepostas na mesma mão, compassos como 3/4 e 6/8.
+   - Biblioteca pessoal no Chrome, com estrelas e recorde.
+   - Limitações conhecidas: D.S., D.C. e Coda não são seguidos; mudanças de andamento ou de compasso no meio da música são ignoradas (vale o primeiro); quiálteras aparecem arredondadas na partitura (a avaliação usa o tempo exato); nota longa segurada sob outras na mesma mão aparece encurtada na partitura.
 4. **Módulo 3**: mãos independentes.
 5. **Módulos 4 a 6**: acordes, escalas e intermediário. Avaliação de duração e força; relatório das notas que você mais erra.
 
 ## Testes
 
-- `npm test`: motor de prática, leitura de MIDI, notação, montagem da partitura (compassos, pausas, acordes) e conteúdo das lições: tudo cabe nas 61 teclas, nenhuma nota atravessa a barra de compasso e toda duração pode ser escrita na partitura.
+- `npm test`: importação (MIDI gerado no teste, MusicXML com ligaduras, acordes, anacruse e repetições, `.mxl` compactado, sugestões de mãos e oitava), motor de prática, leitura de MIDI, notação, montagem da partitura (compassos, pausas, acordes) e conteúdo das lições: tudo cabe nas 61 teclas, nenhuma nota atravessa a barra de compasso e toda duração pode ser escrita na partitura.
 - Teste de ponta a ponta no Chrome com um Fantom simulado: conexão, nota reconhecida, lição completa, acompanhamento enviado ao Fantom.
+- Importação testada com arquivos reais de domínio público (Sonatina de Clementi em `.mxl`, Beethoven com voz e 3 bemóis, Bach com notas sobrepostas) e um MIDI no formato do MuseScore.

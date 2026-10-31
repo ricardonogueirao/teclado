@@ -13,11 +13,12 @@ import {
   Stave,
   StaveConnector,
   StaveNote,
+  StaveTie,
   Voice,
 } from 'vexflow/bravura';
 import { letter, solfege, type NameStyle } from '../music/notes';
-import type { Hand, Song, SongNote } from '../music/types';
-import { buildMeasures, noteValue, staffHands, vexKey, type SheetEvent } from './sheetLayout';
+import { timeSignature, type Hand, type Song, type SongNote } from '../music/types';
+import { buildMeasures, keySpec, noteValue, staffHands, vexKey, type SheetEvent } from './sheetLayout';
 
 export interface SheetGroup {
   el: Element;
@@ -38,11 +39,12 @@ export interface SheetRender {
 
 const LEFT = 12;
 const RIGHT = 24;
-const STAVE_Y: Record<number, number> = { 0: 0, 1: 125 };
+// The gap between the staves leaves room for up to four lines of note names.
+const STAVE_Y: Record<number, number> = { 0: 0, 1: 145 };
 // Stave(y): the top line is 40 below y and the bottom line 80 below.
 const TOP_LINE = 40;
 const BOTTOM_LINE = 80;
-const BOTTOM_ROOM = 62;
+const BOTTOM_ROOM = 70;
 const BEAT_PX = 54;
 const EVENT_PX = 36;
 /** The cursor reaches a bar line this many beats before the bar's first note. */
@@ -71,20 +73,25 @@ function makeNote(ev: SheetEvent, hand: Hand, beatsPerBar: number, opts: Options
   }
 
   const value = noteValue(ev.dur) ?? { code: 'q', dots: 0 };
-  const keys = ev.notes.map((n) => vexKey(n.midi));
+  // The same pitch twice in a chord (doubled in the file) is written once.
+  const midis = [...new Set(ev.notes.map((n) => n.midi))].sort((a, b) => a - b);
+  const keys = midis.map((m) => vexKey(m, opts.flats));
   const note = new StaveNote({ keys, duration: value.code, clef, auto_stem: true });
-  keys.forEach((k, i) => {
-    if (k.includes('#')) note.addModifier(new Accidental('#'), i);
-  });
   if (value.dots) Dot.buildAndAttach([note], { all: true });
+  // A held note continued after a tie gets no name or finger again.
+  if (ev.continued) return note;
 
   if (opts.showNames) {
-    const lines: string[] =
-      opts.nameStyle === 'letters'
-        ? [ev.notes.map((n) => letter(n.midi)).join(' ')]
-        : opts.nameStyle === 'solfege'
-          ? [ev.notes.map((n) => solfege(n.midi)).join(' ')]
-          : [ev.notes.map((n) => solfege(n.midi)).join(' '), ev.notes.map((n) => letter(n.midi)).join(' ')];
+    let lines: string[];
+    if (midis.length === 1) {
+      const sol = solfege(midis[0], opts.flats);
+      const let_ = letter(midis[0], opts.flats);
+      lines = opts.nameStyle === 'letters' ? [let_] : opts.nameStyle === 'solfege' ? [sol] : [sol, let_];
+    } else {
+      // Chords: one name per line, highest note on top, so names never run into each other.
+      const name = (m: number) => (opts.nameStyle === 'letters' ? letter(m, opts.flats) : solfege(m, opts.flats));
+      lines = [...midis].reverse().slice(0, 4).map(name);
+    }
     for (const text of lines) {
       note.addModifier(
         new Annotation(text)
@@ -105,6 +112,7 @@ function makeNote(ev: SheetEvent, hand: Hand, beatsPerBar: number, opts: Options
 interface Options {
   nameStyle: NameStyle;
   showNames: boolean;
+  flats?: boolean;
 }
 
 export function renderSheet(host: HTMLElement, song: Song, opts: Options): SheetRender {
@@ -113,16 +121,23 @@ export function renderSheet(host: HTMLElement, song: Song, opts: Options): Sheet
   const hands = staffHands(song);
   const bpb = song.beatsPerBar;
   const last = measures.length - 1;
+  const [tsNum, tsDen] = timeSignature(song);
+  const key = keySpec(song.keyFifths ?? 0);
+  const noteOpts: Options = { ...opts, flats: (song.keyFifths ?? 0) < 0 };
 
   // Pass 1: build staves and notes, and work out each bar's width.
   let x = LEFT;
   const bars = measures.map((m, i) => {
     const built: Built[] = hands.map((hand, row) => {
       const stave = new Stave(x, STAVE_Y[row], 100);
-      if (i === 0) stave.addClef(hand === 'R' ? 'treble' : 'bass').addTimeSignature(`${bpb}/4`);
+      if (i === 0) {
+        stave.addClef(hand === 'R' ? 'treble' : 'bass');
+        if (key !== 'C') stave.addKeySignature(key);
+        stave.addTimeSignature(`${tsNum}/${tsDen}`);
+      }
       if (i === last) stave.setEndBarType(Barline.type.END);
       const events = m.staves[hand] ?? [];
-      return { stave, hand, events, notes: events.map((ev) => makeNote(ev, hand, bpb, opts)) };
+      return { stave, hand, events, notes: events.map((ev) => makeNote(ev, hand, bpb, noteOpts)) };
     });
     const staves = built.map((b) => b.stave);
     if (i === 0 && staves.length > 1) Stave.formatBegModifiers(staves);
@@ -144,6 +159,8 @@ export function renderSheet(host: HTMLElement, song: Song, opts: Options): Sheet
   // Pass 2: draw, then read back where everything landed.
   const marks: { beat: number; x: number }[] = [];
   const pending: { note: StaveNote; notes: SongNote[] }[] = [];
+  // Notes in play order per hand, to draw the ties once everything is placed.
+  const sequence: Record<string, { note: StaveNote; ev: SheetEvent }[]> = {};
 
   bars.forEach(({ m, built }, i) => {
     built.forEach((b) => b.stave.setContext(ctx).draw());
@@ -160,7 +177,10 @@ export function renderSheet(host: HTMLElement, song: Song, opts: Options): Sheet
     const voices = built.map((b) => {
       b.notes.forEach((n) => n.setStave(b.stave));
       beams.push(...Beam.generateBeams(b.notes));
-      return new Voice({ num_beats: bpb, beat_value: 4 }).setMode(Voice.Mode.SOFT).addTickables(b.notes);
+      const voice = new Voice({ num_beats: tsNum, beat_value: tsDen }).setMode(Voice.Mode.SOFT).addTickables(b.notes);
+      // Sharps, flats and naturals as the key signature requires, bar by bar.
+      Accidental.applyAccidentals([voice], key);
+      return voice;
     });
     const formatter = new Formatter();
     voices.forEach((v) => formatter.joinVoices([v]));
@@ -174,7 +194,10 @@ export function renderSheet(host: HTMLElement, song: Song, opts: Options): Sheet
         const ev = b.events[k];
         const center = n.getAbsoluteX() + n.getGlyphWidth() / 2;
         marks.push({ beat: ev.start, x: center });
-        if (ev.notes.length) pending.push({ note: n, notes: ev.notes });
+        if (ev.notes.length) {
+          pending.push({ note: n, notes: ev.notes });
+          (sequence[b.hand] ??= []).push({ note: n, ev });
+        }
       }),
     );
     if (i === last) {
@@ -182,6 +205,17 @@ export function renderSheet(host: HTMLElement, song: Song, opts: Options): Sheet
       marks.push({ beat: m.start + m.beats, x: s.getX() + s.getWidth() });
     }
   });
+
+  for (const list of Object.values(sequence)) {
+    list.forEach(({ note, ev }, k) => {
+      const next = list[k + 1];
+      if (!ev.tied || !next) return;
+      const indices = note.getKeys().map((_, idx) => idx);
+      new StaveTie({ first_note: note, last_note: next.note, first_indices: indices, last_indices: indices })
+        .setContext(ctx)
+        .draw();
+    });
+  }
 
   // One mark per beat; notes in both staves at the same beat share an x.
   marks.sort((a, b) => a.beat - b.beat || a.x - b.x);

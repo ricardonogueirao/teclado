@@ -5,7 +5,9 @@ import { MODULES, UPCOMING_MODULES } from '../music/lessons';
 import { FANTOM_6_RANGE, noteLabelWithOctave, type NameStyle } from '../music/notes';
 import { canInstall, install, onInstallChange } from '../pwa';
 import { save, streak, type SavedState, type Settings } from '../store/progress';
+import type { LibrarySong } from '../store/library';
 import { Keyboard, type KeyState } from './Keyboard';
+import { Library } from './Library';
 import { useMidi } from './useMidi';
 import { useSize } from './useSize';
 import { Segmented, Stars } from './widgets';
@@ -14,13 +16,16 @@ interface Props {
   state: SavedState;
   setState: (s: SavedState) => void;
   onOpenLesson: (id: string) => void;
+  library: LibrarySong[];
+  onLibraryChange: (list: LibrarySong[]) => boolean;
 }
 
-export function Home({ state, setState, onOpenLesson }: Props) {
+export function Home({ state, setState, onOpenLesson, library, onLibraryChange }: Props) {
   const [installable, setInstallable] = useState(canInstall);
   useEffect(() => onInstallChange(() => setInstallable(canInstall())), []);
   const days = streak(state.practiceDays);
-  const totalStars = Object.values(state.lessons).reduce((n, l) => n + l.stars, 0);
+  const lessonIds = MODULES.flatMap((m) => m.lessons.map((l) => l.id));
+  const totalStars = lessonIds.reduce((n, id) => n + (state.lessons[id]?.stars ?? 0), 0);
   const maxStars = MODULES.reduce((n, m) => n + m.lessons.length * 3, 0);
 
   const updateSettings = (patch: Partial<Settings>) => {
@@ -57,6 +62,8 @@ export function Home({ state, setState, onOpenLesson }: Props) {
       </header>
 
       <ConnectionPanel nameStyle={state.settings.nameStyle} />
+
+      <Library library={library} state={state} onChange={onLibraryChange} onOpen={onOpenLesson} />
 
       <section className="path">
         <h2>Sua trilha</h2>

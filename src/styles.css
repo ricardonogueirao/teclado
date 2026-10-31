@@ -899,3 +899,116 @@ section > h2 {
   padding: 3px 8px;
   border-radius: 7px;
 }
+
+/* ---------- Library and import ---------- */
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-head h2 {
+  font-size: 17px;
+}
+
+.library.dragging {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+}
+
+.library-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 760px;
+}
+
+.song-item {
+  display: flex;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.song-item .lesson-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.song-meta {
+  display: block;
+}
+
+.song-item .remove {
+  flex: none;
+  color: var(--muted);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 10, 15, 0.7);
+}
+
+.card.import {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 32px);
+}
+
+.import-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 20px;
+}
+
+.import-grid .grow {
+  flex: 1;
+  min-width: 220px;
+}
+
+input[type='text'] {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.import-grid input[type='number'] {
+  width: 90px;
+}
+
+table.tracks {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+table.tracks th,
+table.tracks td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+table.tracks th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.error {
+  color: var(--red);
+}
+
+.warn-text {
+  color: var(--amber);
+}
