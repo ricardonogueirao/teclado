@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MODULE_1_SOURCES, MODULE_2_SOURCES, MODULE_3_SOURCES, MODULES } from './lessons';
+import { MODULE_1_SOURCES, MODULE_2_SOURCES, MODULE_3_SOURCES, MODULE_4_SOURCES, MODULES } from './lessons';
 import { noteValue } from '../notation/sheetLayout';
 import { nameToMidi, seq, seqLength } from './notation';
 import { FANTOM_6_RANGE } from './notes';
@@ -21,7 +21,7 @@ describe('notation', () => {
 });
 
 describe('lessons', () => {
-  it.each([...MODULE_1_SOURCES, ...MODULE_2_SOURCES, ...MODULE_3_SOURCES].map((s) => [s.title, s] as const))('%s has whole bars in both hands', (_t, src) => {
+  it.each([...MODULE_1_SOURCES, ...MODULE_2_SOURCES, ...MODULE_3_SOURCES, ...MODULE_4_SOURCES].map((s) => [s.title, s] as const))('%s has whole bars in both hands', (_t, src) => {
     const lengths = [src.right, src.left].filter(Boolean).map((t) => seqLength(t!));
     for (const len of lengths) expect(len % src.beatsPerBar).toBe(0);
     if (lengths.length === 2) expect(lengths[0]).toBe(lengths[1]);
@@ -60,6 +60,22 @@ describe('lessons', () => {
       expect(src.right && src.left, src.title).toBeTruthy();
       for (const n of [...seq('R', src.right!), ...seq('L', src.left!)]) expect(n.finger, src.title).toBeDefined();
     }
+  });
+
+  it('module 4 puts a finger on every note and has real chords', () => {
+    for (const src of MODULE_4_SOURCES) {
+      const notes = [...(src.right ? seq('R', src.right) : []), ...(src.left ? seq('L', src.left) : [])];
+      for (const n of notes) expect(n.finger, src.title).toBeDefined();
+      expect(notes.some((a) => notes.some((b) => a !== b && a.hand === b.hand && a.start === b.start)), src.title).toBe(true);
+    }
+  });
+
+  it('gives each note of a chord its own finger', () => {
+    expect(seq('R', 'C4@1+E4@3+G4@5/2')).toEqual([
+      { midi: 60, start: 0, dur: 2, hand: 'R', finger: 1 },
+      { midi: 64, start: 0, dur: 2, hand: 'R', finger: 3 },
+      { midi: 67, start: 0, dur: 2, hand: 'R', finger: 5 },
+    ]);
   });
 
   it('every lesson has a whole-number tempo for the keyboard metronome', () => {

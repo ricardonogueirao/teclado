@@ -46,7 +46,7 @@ export function Home({ state, setState, onOpenLesson, library, onLibraryChange }
             <i className="lit" />
             <i />
           </span>
-          Tecla a Tecla
+          Teclado do Ricardo
         </div>
         <div className="home-stats">
           {installable && (

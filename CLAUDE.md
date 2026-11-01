@@ -1,4 +1,4 @@
-# Tecla a Tecla
+# Teclado do Ricardo
 
 Keyboard-learning web app (Playground Sessions as the benchmark) for one person: Ricardo, who plays a Roland Fantom 6 (61 keys, MIDI 36–96) over USB on a MacBook Pro M1 in Chrome. Live at https://ricardonogueirao.github.io/teclado/.
 

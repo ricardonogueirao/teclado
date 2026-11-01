@@ -373,6 +373,197 @@ export const MODULE_3_SOURCES: LessonSource[] = [
   },
 ];
 
+// Module 4: chords. Triads in root position, then chords as accompaniment under a melody.
+// Chord shapes are written once; each note carries its own finger (right hand 1-3-5, left hand 5-3-1).
+const RH = {
+  C: 'C4@1+E4@3+G4@5',
+  F: 'F4@1+A4@3+C5@5',
+  G: 'G4@1+B4@3+D5@5',
+  Am: 'A3@1+C4@3+E4@5',
+  Dm: 'D4@1+F4@3+A4@5',
+  Em: 'E4@1+G4@3+B4@5',
+  Cm: 'C4@1+Eb4@3+G4@5',
+  Gm: 'G4@1+Bb4@3+D5@5',
+};
+const LH = {
+  C: 'C3@5+E3@3+G3@1',
+  F: 'F3@5+A3@3+C4@1',
+  G: 'G2@5+B2@3+D3@1',
+};
+/** Left-hand "bass, chord" pair of one chord, 1 beat each: the root, then the other two notes. */
+const PAH = {
+  C: 'C3@5/1 E3@3+G3@1/1',
+  G: 'G2@5/1 B2@3+D3@1/1',
+};
+/** Writes `chord` for `beats` beats. */
+const hold = (chord: string, beats: number) => `${chord}/${beats}`;
+
+export const MODULE_4_SOURCES: LessonSource[] = [
+  {
+    id: 'm4-triade-do',
+    title: 'Sua primeira tríade: Dó maior',
+    goal:
+      'Um acorde é um grupo de notas tocadas juntas. A tríade de Dó maior (cifra: C) tem três notas: Dó, Mi e Sol. Mão direita na posição de Dó, com os dedos 1, 3 e 5 (polegar, médio e mindinho) descendo ao mesmo tempo. Todas as três teclas têm de soar juntas.',
+    bpm: 60,
+    beatsPerBar: 4,
+    right: [
+      hold(RH.C, 4),
+      `${hold(RH.C, 2)} ${hold(RH.C, 2)}`,
+      `${hold(RH.C, 1)} ${hold(RH.C, 1)} ${hold(RH.C, 2)}`,
+      hold(RH.C, 4),
+      `${hold(RH.C, 1)} -/1 ${hold(RH.C, 1)} -/1`,
+      `${hold(RH.C, 2)} -/2`,
+      `${hold(RH.C, 1)} ${hold(RH.C, 1)} ${hold(RH.C, 1)} ${hold(RH.C, 1)}`,
+      hold(RH.C, 4),
+    ].join(' | '),
+  },
+  {
+    id: 'm4-do-fa-sol',
+    title: 'Dó, Fá e Sol',
+    goal:
+      'Os três acordes mais usados da música: C (Dó maior), F (Fá maior) e G (Sol maior). Cada um tem a mesma forma de tríade, com dedos 1, 3 e 5; só muda de lugar. Mova a mão inteira de uma vez, sem olhar para os dedos.',
+    bpm: 60,
+    beatsPerBar: 4,
+    right: [
+      hold(RH.C, 4),
+      hold(RH.F, 4),
+      hold(RH.G, 4),
+      hold(RH.C, 4),
+      `${hold(RH.C, 2)} ${hold(RH.F, 2)}`,
+      `${hold(RH.G, 2)} ${hold(RH.C, 2)}`,
+      `${hold(RH.F, 2)} ${hold(RH.G, 2)}`,
+      hold(RH.C, 4),
+    ].join(' | '),
+  },
+  {
+    id: 'm4-maior-menor',
+    title: 'Maior e menor',
+    goal:
+      'Um acorde maior soa alegre e um menor soa triste. A diferença é uma só nota: no menor, a nota do meio desce meio tom. Dó maior (C) vira Dó menor (Cm) trocando o Mi pelo Mi bemol, a tecla preta logo ao lado. O mesmo vale para Sol (G) e Sol menor (Gm).',
+    bpm: 56,
+    beatsPerBar: 4,
+    right: [
+      hold(RH.C, 4),
+      hold(RH.Cm, 4),
+      hold(RH.C, 4),
+      hold(RH.Cm, 4),
+      hold(RH.G, 4),
+      hold(RH.Gm, 4),
+      `${hold(RH.G, 2)} ${hold(RH.Gm, 2)}`,
+      hold(RH.C, 4),
+    ].join(' | '),
+  },
+  {
+    id: 'm4-menores',
+    title: 'Lá menor, Ré menor e Mi menor',
+    goal:
+      'Os três acordes menores que combinam com Dó maior: Am (Lá menor), Dm (Ré menor) e Em (Mi menor). Só usam teclas brancas. Repare que o Lá menor começa abaixo do Dó central: leve a mão um pouco para a esquerda.',
+    bpm: 56,
+    beatsPerBar: 4,
+    right: [
+      hold(RH.Am, 4),
+      hold(RH.Dm, 4),
+      hold(RH.Em, 4),
+      hold(RH.Am, 4),
+      `${hold(RH.C, 2)} ${hold(RH.G, 2)}`,
+      `${hold(RH.Am, 2)} ${hold(RH.Em, 2)}`,
+      `${hold(RH.Dm, 2)} ${hold(RH.Em, 2)}`,
+      hold(RH.Am, 4),
+    ].join(' | '),
+  },
+  {
+    id: 'm4-quatro-acordes',
+    title: 'Os quatro acordes do pop',
+    goal:
+      'C – G – Am – F é a sequência de acordes de centenas de músicas. A direita toca o acorde (duas vezes por compasso) e a esquerda toca só a nota de baixo, que é o nome do acorde: Dó, Sol, Lá e Fá. Na cifra, o nome do acorde diz qual é a nota de baixo.',
+    bpm: 72,
+    beatsPerBar: 4,
+    right: [
+      `${hold(RH.C, 2)} ${hold(RH.C, 2)}`,
+      `${hold(RH.G, 2)} ${hold(RH.G, 2)}`,
+      `${hold(RH.Am, 2)} ${hold(RH.Am, 2)}`,
+      `${hold(RH.F, 2)} ${hold(RH.F, 2)}`,
+      `${hold(RH.C, 2)} ${hold(RH.C, 2)}`,
+      `${hold(RH.G, 2)} ${hold(RH.G, 2)}`,
+      `${hold(RH.F, 2)} ${hold(RH.F, 2)}`,
+      hold(RH.C, 4),
+    ].join(' | '),
+    left: ['C3@5/4', 'G2@5/4', 'A2@5/4', 'F2@5/4', 'C3@5/4', 'G2@5/4', 'F2@5/4', 'C3@5/4'].join(' | '),
+  },
+  {
+    id: 'm4-acordes-esquerda',
+    title: 'Brilha, Brilha com acordes',
+    goal:
+      'Hora de inverter: a melodia fica na direita e a esquerda toca os acordes (dedos 5, 3 e 1, do grave para o agudo). São só três acordes, C, F e G, e eles mudam no meio de alguns compassos. Olhe a mão esquerda um compasso antes.',
+    bpm: 72,
+    beatsPerBar: 4,
+    right:
+      'C4/1@1 C4/1@1 G4/1@4 G4/1@4 | A4/1@5 A4/1@5 G4/2@4 | F4/1@3 F4/1@3 E4/1@2 E4/1@2 | D4/1@1 D4/1@1 C4/2@1 | ' +
+      'G4/1@4 G4/1@4 F4/1@3 F4/1@3 | E4/1@2 E4/1@2 D4/2@1 | G4/1@4 G4/1@4 F4/1@3 F4/1@3 | E4/1@2 E4/1@2 D4/2@1 | ' +
+      'C4/1@1 C4/1@1 G4/1@4 G4/1@4 | A4/1@5 A4/1@5 G4/2@4 | F4/1@3 F4/1@3 E4/1@2 E4/1@2 | D4/1@1 D4/1@1 C4/2@1',
+    left: [
+      hold(LH.C, 4),
+      `${hold(LH.F, 2)} ${hold(LH.C, 2)}`,
+      `${hold(LH.F, 2)} ${hold(LH.C, 2)}`,
+      `${hold(LH.G, 2)} ${hold(LH.C, 2)}`,
+      `${hold(LH.C, 2)} ${hold(LH.F, 2)}`,
+      `${hold(LH.C, 2)} ${hold(LH.G, 2)}`,
+      `${hold(LH.C, 2)} ${hold(LH.F, 2)}`,
+      `${hold(LH.C, 2)} ${hold(LH.G, 2)}`,
+      hold(LH.C, 4),
+      `${hold(LH.F, 2)} ${hold(LH.C, 2)}`,
+      `${hold(LH.F, 2)} ${hold(LH.C, 2)}`,
+      `${hold(LH.G, 2)} ${hold(LH.C, 2)}`,
+    ].join(' | '),
+  },
+  {
+    id: 'm4-baixo-acorde',
+    title: 'Ode à Alegria: baixo e acorde',
+    goal:
+      'O acompanhamento mais clássico: a esquerda alterna a nota de baixo e o resto do acorde ("pum-tá, pum-tá"). Em cada compasso a esquerda faz quatro toques, um por tempo, enquanto a direita canta a melodia. O baixo é o dedo 5 e o resto do acorde, os dedos 3 e 1 juntos.',
+    bpm: 66,
+    beatsPerBar: 4,
+    right:
+      'E4/1@3 E4/1@3 F4/1@4 G4/1@5 | G4/1@5 F4/1@4 E4/1@3 D4/1@2 | C4/1@1 C4/1@1 D4/1@2 E4/1@3 | E4/1.5@3 D4/0.5@2 D4/2@2 | ' +
+      'E4/1@3 E4/1@3 F4/1@4 G4/1@5 | G4/1@5 F4/1@4 E4/1@3 D4/1@2 | C4/1@1 C4/1@1 D4/1@2 E4/1@3 | D4/1.5@2 C4/0.5@1 C4/2@1',
+    left: [
+      `${PAH.C} ${PAH.C}`,
+      `${PAH.G} ${PAH.G}`,
+      `${PAH.C} ${PAH.C}`,
+      `${PAH.C} ${PAH.G}`,
+      `${PAH.C} ${PAH.C}`,
+      `${PAH.G} ${PAH.G}`,
+      `${PAH.C} ${PAH.C}`,
+      `${PAH.G} ${PAH.C}`,
+    ].join(' | '),
+  },
+  {
+    id: 'm4-valsa-acordes',
+    title: 'Valsa com acordes (3/4)',
+    goal:
+      'Mesma valsa do módulo anterior, agora com acordes de verdade: a esquerda toca a nota de baixo no 1 e o acorde no 2 e no 3 ("pum, tá, tá"). Dois acordes: C (Dó maior) e G (Sol maior). A direita canta a melodia por cima.',
+    bpm: 84,
+    beatsPerBar: 3,
+    right:
+      'E4/2@3 F4/1@4 | G4/3@5 | F4/2@4 E4/1@3 | D4/3@2 | D4/2@2 E4/1@3 | F4/3@4 | E4/2@3 D4/1@2 | C4/3@1 | ' +
+      'E4/1@3 F4/1@4 G4/1@5 | E4/2@3 C4/1@1 | D4/1@2 E4/1@3 D4/1@2 | C4/3@1',
+    left: [
+      'C3@5/1 E3@3+G3@1/1 E3@3+G3@1/1',
+      'C3@5/1 E3@3+G3@1/1 E3@3+G3@1/1',
+      'G2@5/1 B2@3+D3@1/1 B2@3+D3@1/1',
+      'G2@5/1 B2@3+D3@1/1 B2@3+D3@1/1',
+      'G2@5/1 B2@3+D3@1/1 B2@3+D3@1/1',
+      'G2@5/1 B2@3+D3@1/1 B2@3+D3@1/1',
+      'C3@5/1 E3@3+G3@1/1 E3@3+G3@1/1',
+      'C3@5/1 E3@3+G3@1/1 E3@3+G3@1/1',
+      'C3@5/1 E3@3+G3@1/1 E3@3+G3@1/1',
+      'C3@5/1 E3@3+G3@1/1 E3@3+G3@1/1',
+      'G2@5/1 B2@3+D3@1/1 B2@3+D3@1/1',
+      hold(LH.C, 3),
+    ].join(' | '),
+  },
+];
+
 export const MODULES: Module[] = [
   {
     id: 'm1',
@@ -393,11 +584,17 @@ export const MODULES: Module[] = [
       'As duas mãos ao mesmo tempo: em paralelo, em espelho, uma segurando e a outra andando, a melodia passando de mão, valsa em 3/4 e o Minueto em Sol.',
     lessons: MODULE_3_SOURCES.map(buildSong),
   },
+  {
+    id: 'm4',
+    title: 'Módulo 4: Acordes',
+    description:
+      'Tríades maiores e menores, as cifras (C, Am, G...), os acordes do pop e acompanhar uma melodia com a mão esquerda: baixo e acorde, e a valsa.',
+    lessons: MODULE_4_SOURCES.map(buildSong),
+  },
 ];
 
 /** Modules planned for later versions, shown in the path as "em breve". */
 export const UPCOMING_MODULES = [
-  { title: 'Módulo 4: Acordes', description: 'Tríades maiores e menores, cifras, acompanhar uma música.' },
   { title: 'Módulo 5: Escalas e tonalidades', description: 'Passagem do polegar, Sol maior, Fá maior, Lá menor.' },
   { title: 'Módulo 6: Intermediário', description: 'Inversões, arpejos, síncope, pedal e dinâmica.' },
 ];
