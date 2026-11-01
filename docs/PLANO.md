@@ -1,4 +1,4 @@
-# Tecla a Tecla: plano do projeto
+# Teclado do Ricardo: plano do projeto
 
 App para aprender teclado com o Roland Fantom 6, tendo o Playground Sessions como referência. Uso pessoal, roda no Google Chrome do MacBook.
 
@@ -75,7 +75,11 @@ Teclado do computador / mouse ───────> midi/computerKeyboard.ts �
    - Metrônomo do Fantom: a música começa na primeira nota tocada junto com o clique; pausar ou mudar o andamento faz o app achar a batida de novo.
    - Modo Apresentação como padrão: tecla errada marca a nota e a música segue; tecla certa logo depois não conta como erro de novo.
    - Avaliação de tempo mais precisa: horário da mensagem MIDI em vez do quadro da tela; clique do app agendado no tempo exato; janelas 60/140 ms e até meio tempo; resultado em ms em cada tecla, medidor de tempo no topo e tendência média no fim.
-5. **Módulos 4 a 6**: acordes, escalas e intermediário. Avaliação de duração e força; relatório das notas que você mais erra.
+5. **Módulo 4: acordes** *(entregue)*
+   - 8 lições: tríade de Dó maior; Dó, Fá e Sol; maior e menor (C/Cm, G/Gm); Am, Dm e Em; os quatro acordes do pop (C–G–Am–F) com baixo na esquerda; Brilha, Brilha com acordes na esquerda; Ode à Alegria com baixo e acorde; valsa com acordes em 3/4.
+   - Notação de lições: cada nota de um acorde pode ter o seu dedo (`C4@1+E4@3+G4@5/4`).
+   - Cifras (C, Am...) aparecem só no texto de cada lição; o app ainda não desenha cifras na partitura.
+6. **Módulos 5 e 6**: escalas e intermediário. Avaliação de duração e força; relatório das notas que você mais erra.
    - Ideia em aberto: o app mandar o clock MIDI para o Fantom (Sync Mode do Fantom em modo escravo pela USB), para o metrônomo do Fantom seguir o app sozinho, sem ajustar o andamento à mão.
 
 ## Testes

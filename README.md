@@ -1,4 +1,4 @@
-# Tecla a Tecla
+# Teclado do Ricardo
 
 App para aprender teclado tocando no seu Roland Fantom 6. Ele reconhece cada tecla que você toca e mostra na hora se está certo, como o Playground Sessions.
 
@@ -76,7 +76,7 @@ Cores nas notas caindo: azul = mão direita, laranja = mão esquerda, cinza = o 
 
 Os números são os dedos: 1 = polegar, 2 = indicador, 3 = médio, 4 = anelar, 5 = mindinho. Na partitura, os dedos da mão direita ficam acima da pauta de sol e os da mão esquerda, em negrito, logo abaixo da pauta de fá. Nas notas caindo, o número fica dentro da nota; no teclado, na tecla amarela.
 
-A trilha tem três módulos: **1. Primeiros passos**, **2. Lendo partitura** e **3. Mãos independentes** (mãos em paralelo e em espelho, uma mão segurando e a outra andando, a melodia passando de mão, valsa em 3/4 e o Minueto em Sol). Todas as lições estão abertas: escolha a que quiser. A nota fica registrada quando você toca a lição inteira com as duas mãos. 60% vale 1 estrela, 80% vale 2 e 95% vale 3.
+A trilha tem quatro módulos: **1. Primeiros passos**, **2. Lendo partitura**, **3. Mãos independentes** (mãos em paralelo e em espelho, uma mão segurando e a outra andando, a melodia passando de mão, valsa em 3/4 e o Minueto em Sol) e **4. Acordes** (tríades maiores e menores, Dó-Fá-Sol, os quatro acordes do pop, acordes na mão esquerda, baixo e acorde, e a valsa com acordes). Nos acordes, cada nota tem o seu dedo, e o nome do acorde (a cifra, como C ou Am) vem explicado no texto da lição. Todas as lições estão abertas: escolha a que quiser. A nota fica registrada quando você toca a lição inteira com as duas mãos. 60% vale 1 estrela, 80% vale 2 e 95% vale 3.
 
 Atalho: **barra de espaço** começa e pausa.
 

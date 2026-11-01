@@ -2,6 +2,7 @@
 // "C4/1 D4/1 E4/2 | -/4 | C3+G3/4"
 //   note/beats   -/beats = rest   A+B = chord   | = bar line (ignored, for reading)
 // Sharps: C#4. Flats: Bb3. Fingers (optional): E4/1@3
+// A chord can give each note its own finger: C4@1+E4@3+G4@5/4 (a finger after the beats applies to the whole chord)
 import type { Hand, SongNote } from './types';
 
 const LETTER_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -26,7 +27,9 @@ export function seq(hand: Hand, text: string, from = 0): SongNote[] {
     const dur = Number(beats);
     if (pitches !== '-') {
       for (const p of pitches.split('+')) {
-        notes.push({ midi: nameToMidi(p), start: t, dur, hand, ...(finger ? { finger: Number(finger) } : {}) });
+        const [name, own] = p.split('@');
+        const f = own ?? finger;
+        notes.push({ midi: nameToMidi(name), start: t, dur, hand, ...(f ? { finger: Number(f) } : {}) });
       }
     }
     t += dur;
